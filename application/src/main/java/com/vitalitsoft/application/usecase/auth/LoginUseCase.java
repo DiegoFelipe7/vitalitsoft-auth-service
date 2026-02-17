@@ -1,11 +1,14 @@
 package com.vitalitsoft.application.usecase.auth;
 
 
+import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
 import com.vitalitsoft.domain.auth.gateways.PasswordRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -27,7 +30,7 @@ public class LoginUseCase implements BiFunction<String, String, Mono<TokenModel>
 
         return authRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new NexusException(
-                        "USUARIO NO ENCONTRADO",
+                        NexusException.Type.USER_NOT_FOUND,
                         HttpStatus.NOT_FOUND
                 )))
                 .flatMap(this::validateAuthStatus)

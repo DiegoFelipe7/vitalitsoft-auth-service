@@ -2,6 +2,10 @@ package com.vitalitsoft.application.usecase.passwordReset;
 
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.enums.UserEventType;
+import com.vitalitsoft.domain.shared.events.RabbitEventCatalog;
+import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +30,7 @@ public class RequestResetPasswordUseCase implements Function<UserTokenModel, Mon
                 .switchIfEmpty(Mono.defer(() -> {
                     log.warn("Solicitud de reset de contraseña para usuario inexistente: {}", request.getEmail());
                     return Mono.error(new NexusException(
-                            "USUARIO NO ENCONTRADO",
+                            NexusException.Type.USER_NOT_FOUND,
                             HttpStatus.NOT_FOUND
                     ));
                 }))

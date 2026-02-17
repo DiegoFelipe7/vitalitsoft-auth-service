@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ValidateTokenReset {
+public class ValidateTokenResetRequest {
     @NotBlank(message = "La token es obligatorio.")
     private String token;
     @NotNull(message = "El tipo de token es obligatorio.")

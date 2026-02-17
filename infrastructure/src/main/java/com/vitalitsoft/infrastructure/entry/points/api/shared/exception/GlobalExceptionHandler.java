@@ -1,15 +1,16 @@
 package com.vitalitsoft.infrastructure.entry.points.api.shared.exception;
 
-import co.com.nexus.api.shared.utilities.ExceptionUtils;
-import co.com.nexus.model.shared.exception.NexusException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.infrastructure.entry.points.api.shared.utilities.ExceptionUtils;
+import tools.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
+import org.springframework.boot.webflux.error.ErrorWebExceptionHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -46,7 +47,7 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
         try {
             dataBuffer = bufferFactory.wrap(objectMapper.writeValueAsBytes(errorResponse));
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             log.error("Error al serializar la respuesta de error", e);
             dataBuffer = bufferFactory.wrap("Error interno del servidor".getBytes());
         }

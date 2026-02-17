@@ -1,10 +1,15 @@
 package com.vitalitsoft.application.usecase.auth;
 
 
+import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
+import com.vitalitsoft.domain.refreshtoken.RefreshTokenModel;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.enums.Status;
+import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -26,7 +31,7 @@ public class RefreshSessionTokenUseCase
 
         return refreshTokenRepository.findByToken(refreshToken)
                 .switchIfEmpty(Mono.error(new NexusException(
-                        "REFRESH TOKEN NO ENCONTRADO",
+                        NexusException.Type.TOKEN_NOT_FOUND,
                         HttpStatus.UNAUTHORIZED
                 )))
                 .flatMap(this::validateRefreshToken)

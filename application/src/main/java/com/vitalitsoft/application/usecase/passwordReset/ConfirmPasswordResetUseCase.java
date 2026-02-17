@@ -1,6 +1,7 @@
 package com.vitalitsoft.application.usecase.passwordReset;
 
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.TokenType;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
@@ -38,7 +39,7 @@ public class ConfirmPasswordResetUseCase {
                             .flatMap(user -> {
                                 log.info("Actualizando contraseña para usuario: {}", user.getEmail());
                                 user.setPassword(newPassword);
-                                return authRepository.saveUser(user)
+                                return authRepository.save(user)
                                         .doOnSuccess(userId -> log.info("Contraseña actualizada exitosamente para: {}", user.getEmail()))
                                         .doOnError(error -> log.error("Error al actualizar contraseña para: {}", user.getEmail(), error));
                             })

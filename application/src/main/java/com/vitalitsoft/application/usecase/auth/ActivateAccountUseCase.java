@@ -1,6 +1,8 @@
 package com.vitalitsoft.application.usecase.auth;
 
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.enums.Status;
 import com.vitalitsoft.domain.shared.enums.TokenType;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
@@ -25,7 +27,7 @@ public class ActivateAccountUseCase implements BiFunction<String, TokenType, Mon
                 .switchIfEmpty(Mono.defer(() -> {
                     log.warn("Token no encontrado o inválido para tipo: {}", tokenType);
                     return Mono.error(new NexusException(
-                            "TOKEN INVALIDO O EXPIRADO",
+                            NexusException.Type.INVALID_TOKEN,
                             HttpStatus.UNAUTHORIZED
                     ));
                 }))
@@ -42,7 +44,7 @@ public class ActivateAccountUseCase implements BiFunction<String, TokenType, Mon
                             .flatMap(user -> {
                                 log.info("Activando cuenta para usuario: {}", user.getEmail());
                                 user.setStatus(Status.ACTIVE);
-                                return authRepository.saveUser(user)
+                                return authRepository.save(user)
                                         .doOnSuccess(userId -> log.info("Usuario activado exitosamente: {}", user.getEmail()))
                                         .doOnError(error -> log.error("Error al activar usuario: {}", user.getEmail(), error));
                             })

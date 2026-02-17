@@ -1,15 +1,32 @@
 package com.vitalitsoft.domain.shared.exception;
 
 public class NexusException extends CustomException {
-    
+    private static final long serialVersionUID = 1L;
+    public enum Type {
+        USER_NOT_FOUND,
+        INVALID_PASSWORD,
+        INVALID_TOKEN,
+        TOKEN_EXPIRED,
+        TOKEN_NOT_FOUND,
+        EMAIL_ALREADY_REGISTERED,
+        PASSWORD_MISMATCH,
+        ACCOUNT_LOCKED,
+        UNAUTHORIZED_ACCESS,
+        TOKEN_ALREADY_USED
+    }
+
     public NexusException(String message, int httpStatus) {
-        super(message,httpStatus);
+        super(message, httpStatus);
     }
 
     public NexusException(String message, String code) {
         super(message, code);
     }
-    
+
+    public NexusException(Type message, int httpStatus) {
+        super(message.name(), httpStatus);
+    }
+
     public NexusException(String message, String code, int httpStatus) {
         super(message, code, httpStatus);
     }

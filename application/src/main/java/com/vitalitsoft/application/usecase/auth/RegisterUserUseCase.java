@@ -1,14 +1,15 @@
 package com.vitalitsoft.application.usecase.auth;
 
-import co.com.bancolombia.model.auth.AuthModel;
-import co.com.bancolombia.model.auth.gateways.AuthRepository;
-import co.com.bancolombia.model.auth.gateways.PasswordRepository;
-import co.com.bancolombia.model.events.gateways.EventsRepository;
-import co.com.bancolombia.model.events.model.UserRegisterEventModel;
-import co.com.bancolombia.model.shared.constants.HttpStatus;
-import co.com.bancolombia.model.shared.enums.UserEventType;
-import co.com.bancolombia.model.shared.events.RabbitEventCatalog;
-import co.com.bancolombia.model.shared.exception.NexusException;
+
+import com.vitalitsoft.domain.auth.AuthModel;
+import com.vitalitsoft.domain.auth.gateways.AuthRepository;
+import com.vitalitsoft.domain.auth.gateways.PasswordRepository;
+import com.vitalitsoft.domain.events.gateways.EventsRepository;
+import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.enums.UserEventType;
+import com.vitalitsoft.domain.shared.events.RabbitEventCatalog;
+import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -29,7 +30,7 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
                 .flatMap(existing -> {
                     log.warn("Intento de registro con email ya existente: {}", authModel.getEmail());
                     return Mono.error(new NexusException(
-                            "EL EMAIL YA SE ENCUENTRA REGISTRADO",
+                            NexusException.Type.EMAIL_ALREADY_REGISTERED,
                             HttpStatus.CONFLICT
                     ));
                 })
@@ -38,10 +39,10 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
                             log.debug("Email disponible, procediendo con encriptación de contraseña para: {}", authModel.getEmail());
                             String hashed = passwordRepository.encryptPassword(authModel.getPassword());
                             authModel.setPassword(hashed);
-                            return authRepository.saveUser(authModel)
+                            return authRepository.save(authModel)
                                     .doOnSuccess(userId -> log.info("Usuario guardado exitosamente con ID: {} para email: {}", userId, authModel.getEmail()))
-                                    .flatMap(userId -> {
-                                        userRegisterEventModel.setUserId(userId);
+                                    .flatMap(user -> {
+                                        userRegisterEventModel.setUserId(user.getId());
                                         return publishUserRegisteredEvent(userRegisterEventModel);
                                     })
                                     .doOnError(error -> log.error("Error al guardar usuario: {}", authModel.getEmail(), error));
