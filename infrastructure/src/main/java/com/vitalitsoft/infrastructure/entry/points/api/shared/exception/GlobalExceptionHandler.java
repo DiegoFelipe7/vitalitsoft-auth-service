@@ -1,7 +1,5 @@
 package com.vitalitsoft.infrastructure.entry.points.api.shared.exception;
 
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.infrastructure.entry.points.api.shared.utilities.ExceptionUtils;

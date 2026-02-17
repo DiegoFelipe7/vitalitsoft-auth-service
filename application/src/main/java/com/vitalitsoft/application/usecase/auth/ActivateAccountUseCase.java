@@ -37,7 +37,7 @@ public class ActivateAccountUseCase implements BiFunction<String, TokenType, Mon
                             .switchIfEmpty(Mono.defer(() -> {
                                 log.error("Usuario no encontrado para email asociado al token: {}", userToken.getEmail());
                                 return Mono.error(new NexusException(
-                                        "USUARIO NO ENCONTRADO",
+                                        NexusException.Type.USER_NOT_FOUND,
                                         HttpStatus.NOT_FOUND
                                 ));
                             }))

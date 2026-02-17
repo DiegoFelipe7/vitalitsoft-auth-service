@@ -1,9 +1,11 @@
 package com.vitalitsoft.infrastructure.driven.adapters.security.jwt.provider;
 
+import com.vitalitsoft.infrastructure.driven.adapters.security.config.model.SecurityProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -13,13 +15,11 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 @Component
+@RequiredArgsConstructor
 public class JwtProvider {
 
     private static final Logger LOGGER = Logger.getLogger(JwtProvider.class.getName());
-    @Value("${adapters.jwt.secret}")
-    private String secret;
-    @Value("${adapters.jwt.expiration}")
-    private Integer expiration;
+    private final SecurityProperties securityProperties;
 
 
     public String generateAccessToken(UserDetails userDetails) {
@@ -28,8 +28,8 @@ public class JwtProvider {
                 .claim("roles", userDetails.getAuthorities())
                 .claim("type", "access")
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getKey(secret))
+                .expiration(new Date(System.currentTimeMillis() + securityProperties.expiration()))
+                .signWith(getKey(securityProperties.secret()))
                 .compact();
     }
 
@@ -39,13 +39,13 @@ public class JwtProvider {
                 .claim("type", "refresh")
                 .issuedAt(new Date())
                 .expiration(new Date(new Date().getTime() + (30L * 24 * 60 * 60 * 1000)))
-                .signWith(getKey(secret))
+                .signWith(getKey(securityProperties.secret()))
                 .compact();
     }
 
     public Claims getClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getKey(secret))
+                .verifyWith(getKey(securityProperties.secret()))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -53,7 +53,7 @@ public class JwtProvider {
 
     public String getSubject(String token) {
         return Jwts.parser()
-                .verifyWith(getKey(secret))
+                .verifyWith(getKey(securityProperties.secret()))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
@@ -63,7 +63,7 @@ public class JwtProvider {
     public boolean validate(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(getKey(secret))
+                    .verifyWith(getKey(securityProperties.secret()))
                     .build()
                     .parseSignedClaims(token)
                     .getPayload()

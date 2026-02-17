@@ -1,18 +1,26 @@
 package com.vitalitsoft.domain.shared.exception;
 
+import java.io.Serial;
+
 public class NexusException extends CustomException {
+    @Serial
     private static final long serialVersionUID = 1L;
     public enum Type {
         USER_NOT_FOUND,
         INVALID_PASSWORD,
+        REFRESH_INVALID_TOKEN,
         INVALID_TOKEN,
+        REFRESH_TOKEN_EXPIRED,
         TOKEN_EXPIRED,
+        TOKEN_EXPIRED_OR_INVALID,
         TOKEN_NOT_FOUND,
         EMAIL_ALREADY_REGISTERED,
         PASSWORD_MISMATCH,
         ACCOUNT_LOCKED,
         UNAUTHORIZED_ACCESS,
-        TOKEN_ALREADY_USED
+        TOKEN_ALREADY_USED,
+        PENDING_VERIFICATION,
+        INTERNAL_ERROR
     }
 
     public NexusException(String message, int httpStatus) {

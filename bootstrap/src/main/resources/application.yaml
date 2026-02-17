@@ -33,3 +33,9 @@ adapters:
     schema: "public"
     username: "postgres"
     password: "postgres"
+  security:
+    jwt:
+      secret: "mysecretkey"
+      expiration: 3600000
+      header: "Authorization"
+      prefix: "Bearer "

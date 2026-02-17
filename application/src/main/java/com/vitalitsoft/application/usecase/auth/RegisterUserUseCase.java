@@ -59,8 +59,8 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
                 .doOnSuccess(unused -> log.info("Evento '{}' publicado exitosamente para: {}", routing.exchange(), event.getEmail()))
                 .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), event.getEmail(), error))
                 .onErrorMap(error -> new NexusException(
-                        "Error al publicar evento de registro: " + error.getMessage(),
-                        HttpStatus.BAD_REQUEST
+                        NexusException.Type.INTERNAL_ERROR,
+                        HttpStatus.INTERNAL_SERVER_ERROR
                 ));
     }
 }

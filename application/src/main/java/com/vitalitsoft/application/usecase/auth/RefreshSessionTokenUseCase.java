@@ -38,13 +38,13 @@ public class RefreshSessionTokenUseCase
                 .flatMap(entity ->
                         authRepository.findByEmail(entity.getEmail())
                                 .switchIfEmpty(Mono.error(new NexusException(
-                                        "USUARIO NO ENCONTRADO",
+                                        NexusException.Type.USER_NOT_FOUND,
                                         HttpStatus.NOT_FOUND
                                 )))
                                 .flatMap(user -> {
                                     if (user.getStatus() != Status.ACTIVE) {
                                         return Mono.error(new NexusException(
-                                                "USUARIO NO ACTIVO",
+                                                NexusException.Type.ACCOUNT_LOCKED,
                                                 HttpStatus.FORBIDDEN
                                         ));
                                     }
@@ -62,7 +62,7 @@ public class RefreshSessionTokenUseCase
         if (Boolean.TRUE.equals(token.getRevoked())) {
             log.warn("Refresh token revocado");
             return Mono.error(new NexusException(
-                    "REFRESH TOKEN REVOCADO",
+                    NexusException.Type.REFRESH_INVALID_TOKEN,
                     HttpStatus.UNAUTHORIZED
             ));
         }
@@ -70,7 +70,7 @@ public class RefreshSessionTokenUseCase
         if (token.getExpirationTime().isBefore(LocalDateTime.now())) {
             log.warn("Refresh token expirado");
             return Mono.error(new NexusException(
-                    "REFRESH TOKEN EXPIRADO",
+                    NexusException.Type.REFRESH_TOKEN_EXPIRED,
                     HttpStatus.UNAUTHORIZED
             ));
         }

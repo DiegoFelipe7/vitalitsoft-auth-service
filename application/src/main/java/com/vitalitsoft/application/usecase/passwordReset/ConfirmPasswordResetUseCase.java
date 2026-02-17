@@ -22,7 +22,7 @@ public class ConfirmPasswordResetUseCase {
                 .switchIfEmpty(Mono.defer(() -> {
                     log.warn("Token inválido o expirado para tipo: {}", tokenType);
                     return Mono.error(new NexusException(
-                            "TOKEN INVÁLIDO O EXPIRADO",
+                            NexusException.Type.TOKEN_EXPIRED_OR_INVALID,
                             HttpStatus.UNAUTHORIZED
                     ));
                 }))
@@ -32,7 +32,7 @@ public class ConfirmPasswordResetUseCase {
                             .switchIfEmpty(Mono.defer(() -> {
                                 log.error("Usuario no encontrado para email asociado al token: {}", userTokenModel.getEmail());
                                 return Mono.error(new NexusException(
-                                        "USUARIO NO ENCONTRADO",
+                                        NexusException.Type.USER_NOT_FOUND,
                                         HttpStatus.NOT_FOUND
                                 ));
                             }))

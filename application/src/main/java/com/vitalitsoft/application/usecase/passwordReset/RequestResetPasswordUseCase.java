@@ -52,7 +52,7 @@ public class RequestResetPasswordUseCase implements Function<UserTokenModel, Mon
                 .doOnSuccess(unused -> log.info("Evento '{}' publicado exitosamente para: {}", routing.exchange(), email))
                 .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), email, error))
                 .onErrorMap(error -> new NexusException(
-                        "ERROR AL PUBLICAR EVENTO DE RESTABLECIMIENTO: ",
+                        NexusException.Type.INTERNAL_ERROR,
                         HttpStatus.INTERNAL_SERVER_ERROR
                 ));
     }

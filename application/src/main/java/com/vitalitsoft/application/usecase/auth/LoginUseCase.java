@@ -39,7 +39,7 @@ public class LoginUseCase implements BiFunction<String, String, Mono<TokenModel>
                             if (!match) {
                                 log.warn("Credenciales inválidas para usuario: {}", email);
                                 return Mono.error(new NexusException(
-                                        "CREDENCIALES INVALIDAS",
+                                        NexusException.Type.INVALID_PASSWORD,
                                         HttpStatus.UNAUTHORIZED
                                 ));
                             }
@@ -61,14 +61,14 @@ public class LoginUseCase implements BiFunction<String, String, Mono<TokenModel>
             case INACTIVE -> {
                 log.warn("Usuario inactivo: {}", auth.getEmail());
                 yield Mono.error(new NexusException(
-                        "EL USUARIO SE ENCUENTRA INACTIVO",
+                        NexusException.Type.ACCOUNT_LOCKED,
                         HttpStatus.FORBIDDEN
                 ));
             }
             case PENDING_VERIFICATION -> {
                 log.warn("Usuario pendiente de verificación: {}", auth.getEmail());
                 yield Mono.error(new NexusException(
-                        "EL USUARIO AUN NO HA SIDO VERIFICADO",
+                        NexusException.Type.PENDING_VERIFICATION,
                         HttpStatus.FORBIDDEN
                 ));
             }
