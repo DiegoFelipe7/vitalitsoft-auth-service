@@ -1,0 +1,5 @@
+rootProject.name = 'vitalitsoft-auth-service'
+include 'domain'
+include 'application'
+include 'infrastructure'
+include 'bootstrap'

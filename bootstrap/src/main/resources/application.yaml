@@ -1,0 +1,35 @@
+server:
+  port: 8080
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+spring:
+  application:
+    name: "nexus-configuration-service"
+  devtools:
+    add-properties: false
+  profiles:
+    include: null
+    active: "local"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:8080"
+adapters:
+  r2dbc:
+    host: "localhost"
+    port: 5432
+    database: "postgres"
+    schema: "public"
+    username: "postgres"
+    password: "postgres"
