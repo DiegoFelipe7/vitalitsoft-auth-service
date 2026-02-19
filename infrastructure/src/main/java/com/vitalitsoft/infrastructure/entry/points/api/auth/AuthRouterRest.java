@@ -5,6 +5,8 @@ import com.vitalitsoft.application.dto.auth.RegisterUserRequest;
 import com.vitalitsoft.application.dto.passwordReset.ConfirmPasswordResetRequest;
 import com.vitalitsoft.application.dto.passwordReset.RequestResetPassword;
 import com.vitalitsoft.application.dto.passwordReset.ValidateTokenResetRequest;
+import com.vitalitsoft.application.dto.otp.SendOtpRequest;
+import com.vitalitsoft.application.dto.otp.ValidateOtpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -152,6 +154,56 @@ public class AuthRouterRest {
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
                     )
+            ),
+            @RouterOperation(
+                    path = "/auth/send-otp",
+                    produces = {"application/json"},
+                    method = RequestMethod.POST,
+                    beanClass = AuthHandler.class,
+                    beanMethod = "sendOtp",
+                    operation = @Operation(
+                            operationId = "sendOtp",
+                            summary = "Enviar OTP",
+                            description = "Envía un código OTP al usuario por el canal especificado.",
+                            tags = {"Auth"},
+                            requestBody = @RequestBody(
+                                    description = "Datos para enviar OTP",
+                                    required = true,
+                                    content = @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = SendOtpRequest.class)
+                                    )
+                            ),
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "OTP enviado exitosamente"),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/auth/validate-otp",
+                    produces = {"application/json"},
+                    method = RequestMethod.POST,
+                    beanClass = AuthHandler.class,
+                    beanMethod = "validateOtp",
+                    operation = @Operation(
+                            operationId = "validateOtp",
+                            summary = "Validar OTP",
+                            description = "Valida el código OTP enviado al usuario.",
+                            tags = {"Auth"},
+                            requestBody = @RequestBody(
+                                    description = "Datos para validar OTP",
+                                    required = true,
+                                    content = @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = ValidateOtpRequest.class)
+                                    )
+                            ),
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "OTP válido o inválido"),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                            }
+                    )
             )
     })
 
@@ -163,6 +215,8 @@ public class AuthRouterRest {
                 .POST("/auth/request-reset-password", handler::requestResetPassword)
                 .POST("/auth/validate-reset-token", handler::validatePasswordResetToken)
                 .POST("/auth/confirm-reset-password", handler::confirmPasswordReset)
+                .POST("/auth/send-otp", handler::sendOtp)
+                .POST("/auth/validate-otp", handler::validateOtp)
                 .build();
     }
 

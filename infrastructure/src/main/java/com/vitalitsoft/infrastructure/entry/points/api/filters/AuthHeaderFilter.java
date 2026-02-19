@@ -9,17 +9,14 @@ import org.springframework.web.reactive.function.server.HandlerFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.NonNull;
 
 @Component
 public class AuthHeaderFilter implements HandlerFilterFunction<ServerResponse, ServerResponse> {
 
-
     @Override
-    @NonNull
-    public Mono<ServerResponse> filter(@NonNull ServerRequest request, @NonNull HandlerFunction<ServerResponse> next) {
-        var userId = request.headers().firstHeader(Headers.USER_ID_HEADER);
-        if (userId.isBlank()) {
+    public Mono<ServerResponse> filter(ServerRequest request, HandlerFunction<ServerResponse> next) {
+        String userId = request.headers().firstHeader(Headers.USER_ID_HEADER);
+        if (userId == null || userId.isBlank()) {
             return Mono.error(new NexusException("userId header is required", HttpStatus.BAD_REQUEST));
         }
         return next.handle(request);

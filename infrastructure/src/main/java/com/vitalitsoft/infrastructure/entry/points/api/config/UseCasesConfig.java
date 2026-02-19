@@ -5,11 +5,14 @@ import com.vitalitsoft.application.usecase.auth.RegisterUserUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.ConfirmPasswordResetUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.RequestResetPasswordUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.ValidatePasswordResetTokenUseCase;
+import com.vitalitsoft.application.usecase.otp.SendOtpUseCase;
+import com.vitalitsoft.application.usecase.otp.ValidateOtpUseCase;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
 import com.vitalitsoft.domain.auth.gateways.PasswordRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
+import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import org.springframework.context.annotation.Bean;
@@ -59,5 +62,15 @@ public class UseCasesConfig {
             AuthRepository authRepository
     ) {
         return new ConfirmPasswordResetUseCase(userTokenRepository, authRepository);
+    }
+
+    @Bean
+    public SendOtpUseCase sendOtpUseCase(OtpRepository otpRepository) {
+        return new SendOtpUseCase(otpRepository);
+    }
+
+    @Bean
+    public ValidateOtpUseCase validateOtpUseCase(OtpRepository otpRepository) {
+        return new ValidateOtpUseCase(otpRepository);
     }
 }
