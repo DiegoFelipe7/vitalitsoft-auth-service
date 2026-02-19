@@ -7,11 +7,12 @@ services:
       POSTGRES_USER: ${R2DBC_USERNAME}
       POSTGRES_PASSWORD: ${R2DBC_PASSWORD}
     ports:
-      - "5433:5432"
+      - "${R2DBC_PORT}:5432"
+    env_file:
+      - .env
     volumes:
       - db_data:/var/lib/postgresql/data
-
-  app:
+  auth-service:
     build:
       context: .
       dockerfile: Dockerfile
@@ -19,7 +20,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8081:8081"
+      - "${SERVER_PORT}:8080"
     env_file:
       - .env
     environment:

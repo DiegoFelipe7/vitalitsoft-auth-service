@@ -1,31 +1,32 @@
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS auth_users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(32) NOT NULL,
     status VARCHAR(32) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+    );
 
 CREATE TABLE IF NOT EXISTS refresh_token (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
     email VARCHAR(255) NOT NULL,
     token VARCHAR(512) NOT NULL,
     revoked BOOLEAN NOT NULL DEFAULT FALSE,
     expiration_time TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_refresh_token_user
     FOREIGN KEY (user_id)
     REFERENCES auth_users(id)
     ON DELETE CASCADE
-);
+    );
 
 CREATE TABLE IF NOT EXISTS user_token (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
     email VARCHAR(255) NOT NULL,
     token_type VARCHAR(32) NOT NULL,
@@ -33,9 +34,9 @@ CREATE TABLE IF NOT EXISTS user_token (
     used BOOLEAN NOT NULL DEFAULT FALSE,
     expiration_time TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_token_user
-        FOREIGN KEY (user_id)
-        REFERENCES auth_users(id)
-        ON DELETE CASCADE
+    FOREIGN KEY (user_id)
+    REFERENCES auth_users(id)
+    ON DELETE CASCADE
     );

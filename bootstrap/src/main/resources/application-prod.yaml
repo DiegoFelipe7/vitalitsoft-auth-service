@@ -6,6 +6,11 @@ springdoc:
   swagger-ui:
     enabled: false
     path: /swagger-ui
+spring:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:query.sql
 management:
   endpoints:
     web:
