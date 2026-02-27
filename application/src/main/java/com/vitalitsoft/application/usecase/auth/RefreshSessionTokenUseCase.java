@@ -16,10 +16,10 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.function.Function;
+
 @Slf4j
 @RequiredArgsConstructor
-public class RefreshSessionTokenUseCase
-        implements Function<String, Mono<TokenModel>> {
+public class RefreshSessionTokenUseCase implements Function<String, Mono<TokenModel>> {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtRepository jwtRepository;
@@ -27,35 +27,30 @@ public class RefreshSessionTokenUseCase
 
     @Override
     public Mono<TokenModel> apply(String refreshToken) {
-        log.info("Iniciando proceso de refresh token");
+           log.info("Iniciando proceso de refresh token");
+            return  getValidRefreshToken(refreshToken)
+                    .flatMap(this::getActiveUser)
+                    .flatMap(this::generateNewSession)
+                    .doOnSuccess(t -> log.info("Refresh token exitoso"))
+                    .doOnError(e -> log.error("Error en refresh token: {}", e.getMessage()));
+    }
 
+    private Mono<RefreshTokenModel> getValidRefreshToken(String refreshToken) {
         return refreshTokenRepository.findByToken(refreshToken)
-                .switchIfEmpty(Mono.error(new NexusException(
-                        NexusException.Type.TOKEN_NOT_FOUND,
-                        HttpStatus.UNAUTHORIZED
-                )))
-                .flatMap(this::validateRefreshToken)
-                .flatMap(entity ->
-                        authRepository.findByEmail(entity.getEmail())
-                                .switchIfEmpty(Mono.error(new NexusException(
-                                        NexusException.Type.USER_NOT_FOUND,
-                                        HttpStatus.NOT_FOUND
-                                )))
-                                .flatMap(user -> {
-                                    if (user.getStatus() != Status.ACTIVE) {
-                                        return Mono.error(new NexusException(
-                                                NexusException.Type.ACCOUNT_LOCKED,
-                                                HttpStatus.FORBIDDEN
-                                        ));
-                                    }
+                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.TOKEN_NOT_FOUND, HttpStatus.UNAUTHORIZED)))
+                .flatMap(this::validateRefreshToken);
+    }
 
-                                    return refreshAndGenerateTokens(user);
-                                })
-                )
-                .doOnSuccess(t -> log.info("Refresh token exitoso"))
-                .doOnError(e ->
-                        log.error("Error en refresh token {}: {}", refreshToken, e.getMessage())
-                );
+    private Mono<AuthModel> getActiveUser(RefreshTokenModel token) {
+        return authRepository.findByEmail(token.getEmail())
+                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.USER_NOT_FOUND, HttpStatus.NOT_FOUND)))
+                .flatMap(ele->{
+                    if (ele.getStatus() != Status.ACTIVE) {
+                        log.warn("Usuario no activo: {}", ele.getEmail());
+                        return Mono.error(new NexusException(NexusException.Type.ACCOUNT_LOCKED, HttpStatus.FORBIDDEN));
+                    }
+                    return Mono.just(ele);
+                });
     }
 
     private Mono<RefreshTokenModel> validateRefreshToken(RefreshTokenModel token) {
@@ -79,15 +74,17 @@ public class RefreshSessionTokenUseCase
     }
 
 
-    private Mono<TokenModel> refreshAndGenerateTokens(AuthModel authModel) {
-        return refreshTokenRepository.revokeByEmail(authModel.getEmail())
+    private Mono<TokenModel> generateNewSession(AuthModel authModel) {
+        return refreshTokenRepository
+                .revokeByEmail(authModel.getEmail())
                 .then(jwtRepository.generateToken(
                         authModel.getEmail(),
-                        authModel.getRole().name()
+                        authModel.getRole().name(),
+                        authModel.requiresTwoFactor()
                 ))
                 .flatMap(tokens ->
                         refreshTokenRepository
-                                .saveRefreshToken(
+                                .save(
                                         authModel.getEmail(),
                                         authModel.getId(),
                                         tokens.getRefreshToken()

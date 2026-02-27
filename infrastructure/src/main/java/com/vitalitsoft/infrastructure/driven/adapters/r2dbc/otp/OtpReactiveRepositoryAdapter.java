@@ -28,24 +28,17 @@ public class OtpReactiveRepositoryAdapter extends ReactiveAdapterOperations<
 
 
     @Override
-    public Mono<OtpModel> generateOtp(UUID userId) {
-        return Mono.empty();
-    }
-
-    @Override
-    public Mono<OtpModel> getOtp(String code) {
-        return this.findByCode(code);
-    }
-
-    @Override
-    public Mono<Void> checkOtp(String code) {
-        return null;
-    }
-
-    private Mono<OtpModel> findByCode(String code) {
-        return repository
-                .findByCode(code)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.OTP_NOT_FOUND, HttpStatus.NOT_FOUND)))
+    public Mono<OtpModel> save(OtpModel otpModel) {
+        return repository.save(OtpMapper.toEntity(otpModel))
                 .map(OtpMapper::toModel);
     }
+
+    @Override
+    public Mono<OtpModel> findBySessionId(String sessionId) {
+        return repository
+                .findBySessionId(sessionId)
+                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.SESSION_ID_NOT_FOUND, HttpStatus.NOT_FOUND)))
+                .map(OtpMapper::toModel);
+    }
+
 }

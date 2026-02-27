@@ -1,17 +1,18 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS auth_users (
-                                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(32) NOT NULL,
     status VARCHAR(32) NOT NULL,
+    two_factor_not_required_until DATE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
+);
 
 CREATE TABLE IF NOT EXISTS refresh_token (
-                                             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
     email VARCHAR(255) NOT NULL,
     token VARCHAR(512) NOT NULL,
@@ -26,7 +27,7 @@ CREATE TABLE IF NOT EXISTS refresh_token (
     );
 
 CREATE TABLE IF NOT EXISTS user_token (
-                                          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
     email VARCHAR(255) NOT NULL,
     token_type VARCHAR(32) NOT NULL,
@@ -39,4 +40,21 @@ CREATE TABLE IF NOT EXISTS user_token (
     FOREIGN KEY (user_id)
     REFERENCES auth_users(id)
     ON DELETE CASCADE
-    );
+);
+
+
+CREATE TABLE IF NOT EXISTS otp (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    session_id VARCHAR(255) NOT NULL,
+    code VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    attempts INT NOT NULL DEFAULT 0,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_otp_user
+    FOREIGN KEY (user_id)
+    REFERENCES auth_users(id)
+    ON DELETE CASCADE
+);

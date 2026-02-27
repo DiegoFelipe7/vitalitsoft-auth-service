@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 public interface OtpReactiveRepository extends ReactiveCrudRepository<OtpEntity, UUID>, ReactiveQueryByExampleExecutor<OtpEntity> {
-        Mono<OtpEntity> findByCode(String code);
+        Mono<OtpEntity> findBySessionId(String sessionId);
 }

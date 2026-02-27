@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.auth;
+package com.vitalitsoft.application.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,11 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder(toBuilder = true)
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TokenModel{
-    private String token;
+public class TokenResponse {
+    private String accessToken;
     private String refreshToken;
-    private Boolean isTwoFactorAuthRequired;
 }

@@ -29,7 +29,7 @@ public class RefreshTokenReactiveRepositoryAdapter extends ReactiveAdapterOperat
 
 
     @Override
-    public Mono<Void> saveRefreshToken(String email, UUID userId, String token) {
+    public Mono<Void> save(String email, UUID userId, String token) {
         return repository.save(RefreshTokenMapper.mapToEntity(RefreshTokenModel.builder()
                 .email(email)
                 .userId(userId)

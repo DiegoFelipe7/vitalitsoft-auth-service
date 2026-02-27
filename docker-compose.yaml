@@ -26,6 +26,5 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
     restart: unless-stopped
-
 volumes:
   db_data:

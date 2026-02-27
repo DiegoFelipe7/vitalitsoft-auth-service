@@ -17,23 +17,22 @@ public class SwaggerConfig {
     public OpenAPI publicApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Nexus User service API")
-                        .description("API para la gestion de usuarios del sistema Nexus " +
-                                "Incluye servicios para el manejo de profesionales médicos y perfiles profesionales.")
+                        .title("Vitalitsoft Auth Service API")
+                        .description("API para la gestión de autenticación y autorización del sistema Vitalitsoft. Incluye servicios para login, registro, validación de OTP y gestión de tokens JWT.")
                         .version("v1.0.0")
                         .contact(new Contact()
-                                .name("Equipo Nexus")
-                                .email("support@nexus.com")
-                                .url("https://www.nexus.com"))
+                                .name("Equipo Vitalitsoft")
+                                .email("support@vitalitsoft.com")
+                                .url("https://www.vitalitsoft.com"))
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0")))
                 .servers(List.of(
                         new Server()
-                                .url("http://localhost:8080")
+                                .url("http://localhost:8081")
                                 .description("Servidor de desarrollo"),
                         new Server()
-                                .url("https://api.nexus.com")
+                                .url("https://api.vitalitsoft.com")
                                 .description("Servidor de producción")
                 ));
     }

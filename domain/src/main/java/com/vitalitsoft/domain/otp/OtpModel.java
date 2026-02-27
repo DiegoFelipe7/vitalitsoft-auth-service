@@ -14,22 +14,25 @@ import java.util.UUID;
 public class OtpModel {
     private UUID id;
     private UUID userId;
+    private String sessionId;
     private String code;
     private Instant expiresAt;
+    private int attempts;
     private boolean used;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+
+    public void incrementAttempts() {
+        this.attempts++;
+    }
 
     public boolean isExpired() {
         return Instant.now().isAfter(expiresAt);
     }
 
-    public String getMaskedCode() {
-
-        int unmaskedLength = 4;
-        String maskedPart = "*".repeat(code.length() - unmaskedLength);
-        String unmaskedPart = code.substring(code.length() - unmaskedLength);
-        return maskedPart + unmaskedPart;
+    public boolean canRetry(int maxAttempts) {
+        return attempts >= maxAttempts;
     }
 
     public void markAsUsed() {

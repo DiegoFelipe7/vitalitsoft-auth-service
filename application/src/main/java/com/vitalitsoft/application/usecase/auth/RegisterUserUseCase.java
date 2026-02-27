@@ -3,7 +3,7 @@ package com.vitalitsoft.application.usecase.auth;
 
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
-import com.vitalitsoft.domain.auth.gateways.PasswordRepository;
+import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
@@ -16,51 +16,74 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.BiFunction;
 
+
 @Slf4j
 @RequiredArgsConstructor
 public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEventModel, Mono<Void>> {
     private final AuthRepository authRepository;
-    private final PasswordRepository passwordRepository;
+    private final HashingRepository hashingRepository;
     private final EventsRepository<UserRegisterEventModel> eventsRepository;
 
     @Override
-    public Mono<Void> apply(AuthModel authModel, UserRegisterEventModel userRegisterEventModel) {
-        log.info("Iniciando proceso de registro para el usuario: {}", authModel.getEmail());
-        return authRepository.findByEmail(authModel.getEmail())
-                .flatMap(existing -> {
-                    log.warn("Intento de registro con email ya existente: {}", authModel.getEmail());
-                    return Mono.error(new NexusException(
-                            NexusException.Type.EMAIL_ALREADY_REGISTERED,
-                            HttpStatus.CONFLICT
-                    ));
-                })
-                .switchIfEmpty(
-                        Mono.defer(() -> {
-                            log.debug("Email disponible, procediendo con encriptación de contraseña para: {}", authModel.getEmail());
-                            String hashed = passwordRepository.encryptPassword(authModel.getPassword());
-                            authModel.setPassword(hashed);
-                            return authRepository.save(authModel)
-                                    .doOnSuccess(userId -> log.info("Usuario guardado exitosamente con ID: {} para email: {}", userId, authModel.getEmail()))
-                                    .flatMap(user -> {
-                                        userRegisterEventModel.setUserId(user.getId());
-                                        return publishUserRegisteredEvent(userRegisterEventModel);
-                                    })
-                                    .doOnError(error -> log.error("Error al guardar usuario: {}", authModel.getEmail(), error));
-                        })
-                )
-                .then()
-                .doOnSuccess(unused -> log.info("Registro completado exitosamente para: {}", authModel.getEmail()));
+    public Mono<Void> apply(AuthModel authModel, UserRegisterEventModel eventModel) {
+
+        log.info("Iniciando registro para: {}", authModel.getEmail());
+
+        return validateEmailNotExists(authModel.getEmail())
+                .then(createUser(authModel))
+                .flatMap(savedUser -> publishEvent(savedUser, eventModel))
+                .doOnSuccess(unused ->
+                        log.info("Registro completado exitosamente para: {}", authModel.getEmail())
+                );
     }
 
-    private Mono<Void> publishUserRegisteredEvent(UserRegisterEventModel event) {
-        log.debug("Publicando evento de registro para: {}", event.getEmail());
+    private Mono<Void> validateEmailNotExists(String email) {
+        return authRepository.findByEmail(email)
+                .hasElement()
+                .flatMap(exists -> {
+                    if (exists) {
+                        log.warn("Email ya registrado: {}", email);
+                        return Mono.error(new NexusException(
+                                NexusException.Type.EMAIL_ALREADY_REGISTERED,
+                                HttpStatus.CONFLICT
+                        ));
+                    }
+                    return Mono.empty();
+                });
+    }
+
+    private Mono<AuthModel> createUser(AuthModel authModel) {
+        return hashingRepository.hash(authModel.getPassword())
+                .map(hashedPassword -> {
+                    authModel.setPassword(hashedPassword);
+                    return authModel;
+                })
+                .flatMap(authRepository::save)
+                .doOnSuccess(user -> log.info("Usuario creado  para email: {}", authModel.getEmail()))
+                .onErrorMap(error ->
+                        new NexusException(
+                                NexusException.Type.INTERNAL_ERROR,
+                                HttpStatus.INTERNAL_SERVER_ERROR
+                        )
+                );
+    }
+
+
+    private Mono<Void> publishEvent(AuthModel savedUser, UserRegisterEventModel eventModel) {
+
         var routing = RabbitEventCatalog.resolve(UserEventType.USER_CREATED);
-        return eventsRepository.publish(routing.exchange(), routing.routingKey(), event)
-                .doOnSuccess(unused -> log.info("Evento '{}' publicado exitosamente para: {}", routing.exchange(), event.getEmail()))
-                .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), event.getEmail(), error))
-                .onErrorMap(error -> new NexusException(
-                        NexusException.Type.INTERNAL_ERROR,
-                        HttpStatus.INTERNAL_SERVER_ERROR
-                ));
+        eventModel.setUserId(savedUser.getId());
+
+        log.debug("Publicando evento USER_CREATED para: {}", eventModel.getEmail());
+
+        return eventsRepository
+                .publish(routing.exchange(), routing.routingKey(), eventModel)
+                .doOnSuccess(unused -> log.info("Evento publicado correctamente para: {}", eventModel.getEmail()))
+                .onErrorMap(error ->
+                        new NexusException(
+                                NexusException.Type.INTERNAL_ERROR,
+                                HttpStatus.INTERNAL_SERVER_ERROR
+                        )
+                );
     }
 }

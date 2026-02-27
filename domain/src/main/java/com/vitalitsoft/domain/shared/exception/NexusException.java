@@ -15,12 +15,19 @@ public class NexusException extends CustomException {
         TOKEN_EXPIRED_OR_INVALID,
         TOKEN_NOT_FOUND,
         EMAIL_ALREADY_REGISTERED,
-        OTP_NOT_FOUND,
+        SESSION_ID_NOT_FOUND,
+        OTP_MAX_RESEND_ATTEMPTS,
+        OTP_ALREADY_USED,
+        OTP_EXPIRED,
+        OTP_INVALID,
+        OTP_MAX_ATTEMPTS,
         PASSWORD_MISMATCH,
         ACCOUNT_LOCKED,
         UNAUTHORIZED_ACCESS,
         TOKEN_ALREADY_USED,
         PENDING_VERIFICATION,
+        MISSING_AUTH,
+        INVALID_AUTH,
         INTERNAL_ERROR
     }
 
