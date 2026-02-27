@@ -21,12 +21,19 @@ public class JwtAdapter implements JwtRepository {
     private final JwtProvider jwtProvider;
 
     @Override
-    public Mono<TokenModel> generateToken(String email, String role) {
-        return Mono.fromCallable(() -> {
-            Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
-            UserDetails userDetails = new User(email, "", authorities);
-            return new TokenModel(jwtProvider.generateAccessToken(userDetails), jwtProvider.generateRefreshToken(email));
-        });
+    public Mono<TokenModel> generateToken(String email, String role , Boolean isTwoFactorAuthRequired) {
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+        UserDetails userDetails = new User(email, "", authorities);
+        String accessToken = jwtProvider.generateAccessToken(userDetails);
+        String refreshToken = jwtProvider.generateRefreshToken(email);
+
+        TokenModel tokenModel = TokenModel.builder()
+                .token(accessToken)
+                .refreshToken(refreshToken)
+                .isTwoFactorAuthRequired(isTwoFactorAuthRequired)
+                .build();
+
+        return Mono.just(tokenModel);
     }
 
     @Override

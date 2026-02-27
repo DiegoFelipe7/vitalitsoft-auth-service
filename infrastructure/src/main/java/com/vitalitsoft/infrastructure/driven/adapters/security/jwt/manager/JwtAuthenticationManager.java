@@ -4,6 +4,7 @@ package com.vitalitsoft.infrastructure.driven.adapters.security.jwt.manager;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.infrastructure.driven.adapters.security.jwt.provider.JwtProvider;
+import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,9 +13,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -23,20 +25,29 @@ public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
     private final JwtProvider jwtProvider;
 
     @Override
-    public Mono<Authentication> authenticate(Authentication authentication) {
+    @Nonnull
+    public Mono<Authentication> authenticate(@Nonnull Authentication authentication) {
         return Mono.just(authentication)
-                .map(auth -> jwtProvider.getClaims(auth.getCredentials().toString()))
-                .log()
+                .map(auth -> jwtProvider.getClaims(Objects.requireNonNull(auth.getCredentials()).toString()))
                 .onErrorResume(e -> Mono.error(new NexusException("BAD TOKEN", HttpStatus.BAD_REQUEST)))
-                .map(claims -> new UsernamePasswordAuthenticationToken(
-                        claims.getSubject(),
-                        null,
-                        Stream.of(claims.get("roles"))
-                                .map(role -> (List<Map<String, String>>) role)
-                                .flatMap(role -> role.stream()
-                                        .map(r -> r.get("authority"))
-                                        .map(SimpleGrantedAuthority::new))
-                                .toList())
-                );
+                .map(claims -> {
+                    Object rolesObj = claims.get("roles");
+                    List<SimpleGrantedAuthority> authorities = Collections.emptyList();
+                    if (rolesObj instanceof List<?> rawList) {
+                        authorities = rawList.stream()
+                                .filter(Map.class::isInstance)
+                                .map(m -> (Map<?, ?>) m)
+                                .map(m -> m.get("authority"))
+                                .filter(String.class::isInstance)
+                                .map(auth -> new SimpleGrantedAuthority((String) auth))
+                                .toList();
+                    }
+
+                    return new UsernamePasswordAuthenticationToken(
+                            claims.getSubject(),
+                            null,
+                            authorities
+                    );
+                });
     }
 }
