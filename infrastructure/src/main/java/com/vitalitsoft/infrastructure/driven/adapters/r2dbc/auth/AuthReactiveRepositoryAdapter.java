@@ -3,6 +3,7 @@ package com.vitalitsoft.infrastructure.driven.adapters.r2dbc.auth;
 
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
+import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.auth.mapper.AuthMapper;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
@@ -38,6 +39,14 @@ public class AuthReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     public Mono<AuthModel> save(AuthModel authModel) {
         return this.repository
                 .save(AuthMapper.mapToEntity(authModel))
+                .map(AuthMapper::toModel);
+    }
+
+    @Override
+    public Mono<AuthModel> findById(UUID id) {
+        return repository
+                .findById(id)
+                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.USER_NOT_FOUND, 404)))
                 .map(AuthMapper::mapToModel);
     }
 

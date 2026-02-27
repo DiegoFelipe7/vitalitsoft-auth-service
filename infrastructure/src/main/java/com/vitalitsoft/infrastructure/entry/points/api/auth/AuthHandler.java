@@ -12,8 +12,8 @@ import com.vitalitsoft.application.usecase.auth.RegisterUserUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.ConfirmPasswordResetUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.RequestResetPasswordUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.ValidatePasswordResetTokenUseCase;
-import com.vitalitsoft.application.usecase.otp.SendOtpUseCase;
-import com.vitalitsoft.application.usecase.otp.ValidateOtpUseCase;
+import com.vitalitsoft.application.usecase.otp.ResendOtpUseCase;
+import com.vitalitsoft.application.usecase.otp.VerifyOtpUseCase;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.infrastructure.entry.points.api.config.ObjectValidator;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +23,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-import com.vitalitsoft.application.dto.otp.SendOtpRequest;
+import com.vitalitsoft.application.dto.otp.ResendOtpRequest;
 import com.vitalitsoft.application.dto.otp.ValidateOtpRequest;
-import com.vitalitsoft.application.dto.otp.OtpResponse;
 
 
 @Slf4j
@@ -38,8 +37,8 @@ public class AuthHandler {
     private final ValidatePasswordResetTokenUseCase validatePasswordResetTokenUseCase;
     private final ConfirmPasswordResetUseCase confirmPasswordResetUseCase;
     private final ObjectValidator objectValidator;
-    private final SendOtpUseCase sendOtpUseCase;
-    private final ValidateOtpUseCase validateOtpUseCase;
+    private final ResendOtpUseCase resendOtpUseCase;
+    private final VerifyOtpUseCase verifyOtpUseCase;
 
 
     public Mono<ServerResponse> login(ServerRequest request) {
@@ -115,18 +114,20 @@ public class AuthHandler {
                 );
     }
 
-    public Mono<ServerResponse> sendOtp(ServerRequest request) {
-        return request.bodyToMono(SendOtpRequest.class)
+    public Mono<ServerResponse> resendOtp(ServerRequest request) {
+        return request.bodyToMono(ResendOtpRequest.class)
                 .flatMap(objectValidator::validate)
-                .flatMap(req -> sendOtpUseCase.apply(req.getDestination(), req.getChannel())
-                        .thenReturn(new OtpResponse(true, "OTP enviado")))
-                .flatMap(response -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(response));
+                .flatMap(req -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(resendOtpUseCase.apply(req.getSessionId()), Void.class));
+
+
     }
 
-    public Mono<ServerResponse> validateOtp(ServerRequest request) {
+    public Mono<ServerResponse> verifyOtp(ServerRequest request) {
         return request.bodyToMono(ValidateOtpRequest.class)
                 .flatMap(objectValidator::validate)
-                .flatMap(req -> validateOtpUseCase.apply(""))
+                .flatMap(req -> verifyOtpUseCase.apply(req.getOtp(), req.getSessionId(), req.isInactiveTwoFactor()))
                 .flatMap(response -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(response));
     }
 

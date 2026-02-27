@@ -5,7 +5,7 @@ import com.vitalitsoft.application.dto.auth.RegisterUserRequest;
 import com.vitalitsoft.application.dto.passwordReset.ConfirmPasswordResetRequest;
 import com.vitalitsoft.application.dto.passwordReset.RequestResetPassword;
 import com.vitalitsoft.application.dto.passwordReset.ValidateTokenResetRequest;
-import com.vitalitsoft.application.dto.otp.SendOtpRequest;
+import com.vitalitsoft.application.dto.otp.ResendOtpRequest;
 import com.vitalitsoft.application.dto.otp.ValidateOtpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -156,43 +156,45 @@ public class AuthRouterRest {
                     )
             ),
             @RouterOperation(
-                    path = "/auth/send-otp",
+                    path = "/auth/resend-otp",
                     produces = {"application/json"},
                     method = RequestMethod.POST,
                     beanClass = AuthHandler.class,
-                    beanMethod = "sendOtp",
+                    beanMethod = "resendOtp",
                     operation = @Operation(
-                            operationId = "sendOtp",
-                            summary = "Enviar OTP",
-                            description = "Envía un código OTP al usuario por el canal especificado.",
+                            operationId = "resendOtp",
+                            summary = "Renviar OTP",
+                            description = "Envía un código OTP al usuario por el canal especificado (email, SMS, etc). Requiere que el usuario esté registrado y autenticado.",
                             tags = {"Auth"},
                             requestBody = @RequestBody(
-                                    description = "Datos para enviar OTP",
+                                    description = "Datos para enviar OTP (usuario, canal, tipo de operación)",
                                     required = true,
                                     content = @Content(
                                             mediaType = "application/json",
-                                            schema = @Schema(implementation = SendOtpRequest.class)
+                                            schema = @Schema(implementation = ResendOtpRequest.class)
                                     )
                             ),
                             responses = {
                                     @ApiResponse(responseCode = "200", description = "OTP enviado exitosamente"),
-                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                                    @ApiResponse(responseCode = "400", description = "Solicitud inválida", content = @Content(schema = @Schema(type = "string", example = "Datos faltantes o incorrectos"))),
+                                    @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content(schema = @Schema(type = "string", example = "Usuario no autenticado"))),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(schema = @Schema(type = "string", example = "Error al enviar OTP")))
                             }
                     )
             ),
             @RouterOperation(
-                    path = "/auth/validate-otp",
+                    path = "/auth/verify-otp",
                     produces = {"application/json"},
                     method = RequestMethod.POST,
                     beanClass = AuthHandler.class,
-                    beanMethod = "validateOtp",
+                    beanMethod = "verifyOtp",
                     operation = @Operation(
-                            operationId = "validateOtp",
+                            operationId = "verifyOtp",
                             summary = "Validar OTP",
-                            description = "Valida el código OTP enviado al usuario.",
+                            description = "Valida el código OTP enviado al usuario para completar una operación segura (login, registro, cambio de contraseña, etc).",
                             tags = {"Auth"},
                             requestBody = @RequestBody(
-                                    description = "Datos para validar OTP",
+                                    description = "Datos para validar OTP (usuario, código, tipo de operación)",
                                     required = true,
                                     content = @Content(
                                             mediaType = "application/json",
@@ -200,8 +202,10 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "OTP válido o inválido"),
-                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                                    @ApiResponse(responseCode = "200", description = "OTP válido", content = @Content(schema = @Schema(type = "string", example = "OTP validado correctamente"))),
+                                    @ApiResponse(responseCode = "400", description = "OTP inválido o expirado", content = @Content(schema = @Schema(type = "string", example = "OTP incorrecto o expirado"))),
+                                    @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content(schema = @Schema(type = "string", example = "Usuario no autenticado"))),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(schema = @Schema(type = "string", example = "Error al validar OTP")))
                             }
                     )
             )
@@ -215,8 +219,8 @@ public class AuthRouterRest {
                 .POST("/auth/request-reset-password", handler::requestResetPassword)
                 .POST("/auth/validate-reset-token", handler::validatePasswordResetToken)
                 .POST("/auth/confirm-reset-password", handler::confirmPasswordReset)
-                .POST("/auth/send-otp", handler::sendOtp)
-                .POST("/auth/validate-otp", handler::validateOtp)
+                .POST("/auth/resend-otp", handler::resendOtp)
+                .POST("/auth/verify-otp", handler::verifyOtp)
                 .build();
     }
 
