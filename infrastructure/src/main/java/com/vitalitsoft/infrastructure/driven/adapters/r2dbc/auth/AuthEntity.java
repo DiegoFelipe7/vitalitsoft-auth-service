@@ -33,6 +33,7 @@ public class AuthEntity implements UserDetails {
     private LocalDateTime updatedAt;
 
     @Override
+    @NonNull
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(this.role != null ? this.role.name() : Role.USER.name()));
     }
@@ -43,6 +44,7 @@ public class AuthEntity implements UserDetails {
     }
 
     @Override
+    @NonNull
     public String getUsername() {
         return this.getId().toString();
     }

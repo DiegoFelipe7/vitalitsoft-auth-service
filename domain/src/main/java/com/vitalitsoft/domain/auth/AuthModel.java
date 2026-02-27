@@ -1,11 +1,8 @@
 package com.vitalitsoft.domain.auth;
 
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.Role;
 import com.vitalitsoft.domain.shared.enums.Status;
-import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.*;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
