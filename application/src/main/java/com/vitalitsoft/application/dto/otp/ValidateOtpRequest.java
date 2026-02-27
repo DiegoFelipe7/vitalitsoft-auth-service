@@ -1,10 +1,19 @@
 package com.vitalitsoft.application.dto.otp;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ValidateOtpRequest {
-    private String destination;
+    @NotBlank(message = "El session id es obligatoria.")
+    private String sessionId;
+    @NotBlank(message = "La otp es obligatoria.")
     private String otp;
-    private String channel;
+    private boolean inactiveTwoFactor = false;
 }

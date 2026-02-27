@@ -9,11 +9,13 @@ public final class OtpMapper {
         throw new IllegalStateException("Utility class");
     }
 
-    public static OtpEntity toEntity(OtpModel otpModel) {
+    public static OtpEntity toEntity (OtpModel otpModel) {
         return OtpEntity
                 .builder()
                 .id(otpModel.getId())
                 .userId(otpModel.getUserId())
+                .sessionId(otpModel.getSessionId())
+                .attempts(otpModel.getAttempts())
                 .code(otpModel.getCode())
                 .expiresAt(otpModel.getExpiresAt())
                 .used(otpModel.isUsed())
@@ -27,6 +29,8 @@ public final class OtpMapper {
                 .builder()
                 .id(otpEntity.getId())
                 .userId(otpEntity.getUserId())
+                .sessionId(otpEntity.getSessionId())
+                .attempts(otpEntity.getAttempts())
                 .code(otpEntity.getCode())
                 .expiresAt(otpEntity.getExpiresAt())
                 .used(otpEntity.isUsed())

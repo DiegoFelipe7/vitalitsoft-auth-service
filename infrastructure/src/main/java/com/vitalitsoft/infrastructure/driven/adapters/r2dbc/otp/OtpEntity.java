@@ -18,8 +18,10 @@ public class OtpEntity {
     @Id
     private UUID id;
     private UUID userId;
+    private String sessionId;
     private String code;
     private Instant expiresAt;
+    private int attempts;
     private boolean used;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
