@@ -1,5 +1,6 @@
 package com.vitalitsoft.application.usecase.auth;
 
+import com.vitalitsoft.application.dto.auth.request.LogoutRequest;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,15 +10,18 @@ import java.util.UUID;
 import java.util.function.Function;
 
 @RequiredArgsConstructor
-public class LogoutUseCase implements Function<String, Mono<Void>> {
+public class LogoutUseCase implements Function<LogoutRequest, Mono<Void>> {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtRepository jwtRepository;
 
     @Override
-    public Mono<Void> apply(String token) {
-        return jwtRepository.getSubject(token)
-                .flatMap(ele -> refreshTokenRepository.revokeTokenByUserId(UUID.fromString(ele)))
-                .then();
+    public Mono<Void> apply(LogoutRequest request) {
+        log.info("Iniciando proceso de logout");
+        
+        return jwtRepository.getSubject(request.getToken())
+                .flatMap(userId -> refreshTokenRepository.revokeTokenByUserId(UUID.fromString(userId)))
+                .doOnSuccess(response -> log.info("Logout exitoso: {}", ""))
+                .doOnError(error -> log.error("Error durante logout: {}", error.getMessage()));
     }
 }

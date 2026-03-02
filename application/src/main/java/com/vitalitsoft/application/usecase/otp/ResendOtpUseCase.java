@@ -1,5 +1,6 @@
 package com.vitalitsoft.application.usecase.otp;
 
+import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.SendOtpEventModel;
@@ -18,7 +19,7 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ResendOtpUseCase implements Function<String, Mono<Void>> {
+public class ResendOtpUseCase implements Function<ResendOtpRequest, Mono<Void>> {
 
     private static final int MAX_RESEND = 3;
     private final AuthRepository authRepository;
@@ -27,11 +28,14 @@ public class ResendOtpUseCase implements Function<String, Mono<Void>> {
     private final HashingRepository encryptionRepository;
 
     @Override
-    public Mono<Void> apply(String sessionId) {
-        return otpRepository.findBySessionId(sessionId)
+    public Mono<Void> apply(ResendOtpRequest request) {
+        log.info("Iniciando proceso de reenvío de OTP para sessionId: {}", request.getSessionId());
+        
+        return otpRepository.findBySessionId(request.getSessionId())
                 .flatMap(this::validateResendRules)
                 .flatMap(this::processOtpRegeneration)
-                .then();
+                .doOnSuccess(response -> log.info("OTP reenviado exitosamente para sessionId: {}", request.getSessionId()))
+                .doOnError(error -> log.error("Error al reenviar OTP para sessionId {}: {}", request.getSessionId(), error.getMessage()));
     }
 
     private Mono<OtpModel> validateResendRules(OtpModel otp) {

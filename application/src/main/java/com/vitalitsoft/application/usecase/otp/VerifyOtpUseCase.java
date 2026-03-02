@@ -1,5 +1,8 @@
 package com.vitalitsoft.application.usecase.otp;
 
+import com.vitalitsoft.application.dto.auth.response.LoginResponse;
+import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
+import com.vitalitsoft.application.mapper.auth.AuthMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
@@ -16,9 +19,10 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.function.Function;
 
 @RequiredArgsConstructor
-public class VerifyOtpUseCase {
+public class VerifyOtpUseCase implements Function<ValidateOtpRequest, Mono<LoginResponse>> {
     private static final int MAX_ATTEMPTS = 3;
     private final OtpRepository otpRepository;
     private final AuthRepository authRepository;
@@ -27,13 +31,19 @@ public class VerifyOtpUseCase {
     private final RefreshTokenRepository refreshTokenRepository;
 
 
-    public Mono<TokenModel> apply(String sessionId, String otp, boolean inactiveTwoFactor) {
-        return otpRepository.findBySessionId(sessionId)
+    @Override
+    public Mono<LoginResponse> apply(ValidateOtpRequest request) {
+        log.info("Iniciando verificación de OTP para sessionId: {}", request.getSessionId());
+        
+        return otpRepository.findBySessionId(request.getSessionId())
                 .flatMap(this::validateOtpState)
                 .delayElement(Duration.ofSeconds(3))
-                .flatMap(data -> verifyOtpCode(data, otp))
+                .flatMap(data -> verifyOtpCode(data, request.getOtp()))
                 .flatMap(this::markOtpAsUsed)
-                .flatMap(ele -> generateTokens(ele.getUserId(), inactiveTwoFactor));
+                .flatMap(otpModel -> generateTokens(otpModel.getUserId(), request.isInactiveTwoFactor()))
+                .map(AuthMapper::toLoginResponse)
+                .doOnSuccess(response -> log.info("OTP verificado exitosamente"))
+                .doOnError(error -> log.error("Error al verificar OTP: {}", error.getMessage()));
     }
 
     private Mono<OtpModel> validateOtpState(OtpModel otp) {

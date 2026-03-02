@@ -1,5 +1,7 @@
 package com.vitalitsoft.application.usecase.passwordReset;
 
+import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
+import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.PasswordResetEventModel;
@@ -17,33 +19,34 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class RequestResetPasswordUseCase implements Function<UserTokenModel, Mono<Void>> {
+public class RequestResetPasswordUseCase implements Function<RequestResetPassword, Mono<Void>> {
 
     private final AuthRepository authRepository;
     private final UserTokenRepository userTokenRepository;
     private final EventsRepository<PasswordResetEventModel> eventsRepository;
 
     @Override
-    public Mono<Void> apply(UserTokenModel userTokenModel) {
-        log.info("Iniciando solicitud de restablecimiento de contraseña para: {}", userTokenModel.getEmail());
+    public Mono<Void> apply(RequestResetPassword request) {
+        log.info("Iniciando solicitud de restablecimiento de contraseña para: {}", request.getEmail());
 
-        return authRepository.findByEmail(userTokenModel.getEmail())
-                .flatMap(user -> {
-                    userTokenModel.setUserId(user.getId());
-                    return Mono.just(userTokenModel);
+        return authRepository.findByEmail(request.getEmail())
+                .map(user -> {
+                    UserTokenModel userTokenModel = UserTokenMapper.toPasswordModel(request.getEmail());
+                    return userTokenModel.withUserId(user.getId());
                 })
                 .flatMap(userTokenRepository::save)
-                .flatMap(saved -> publishEvent(userTokenModel.getEmail(), userTokenModel.getToken()))
-                .doOnSuccess(unused -> log.info("Proceso de solicitud de restablecimiento completado para: {}", userTokenModel.getEmail()));
+                .flatMap(saved -> publishEvent(request.getEmail(), saved.getToken()))
+                .doOnSuccess(response -> log.info("Proceso de solicitud de restablecimiento completado para: {}", request.getEmail()))
+                .doOnError(error -> log.error("Error al solicitar restablecimiento para {}: {}", request.getEmail(), error.getMessage()));
     }
 
     private Mono<Void> publishEvent(String email, String token) {
         log.debug("Publicando evento de restablecimiento de contraseña para: {}", email);
         var routing = RabbitEventCatalog.resolve(UserEventType.USER_PASSWORD_RESET);
         return eventsRepository.publish(routing.exchange(), routing.routingKey(), PasswordResetEventModel.builder()
-                                .email(email)
-                                .token(token)
-                                .build())
+                        .email(email)
+                        .token(token)
+                        .build())
                 .doOnSuccess(unused -> log.info("Evento '{}' publicado exitosamente para: {}", routing.exchange(), email))
                 .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), email, error));
 

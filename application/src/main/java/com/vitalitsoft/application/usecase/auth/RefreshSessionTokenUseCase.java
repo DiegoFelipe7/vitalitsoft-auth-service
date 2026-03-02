@@ -1,6 +1,9 @@
 package com.vitalitsoft.application.usecase.auth;
 
 
+import com.vitalitsoft.application.dto.auth.request.RefreshSessionRequest;
+import com.vitalitsoft.application.dto.auth.response.RefreshSessionResponse;
+import com.vitalitsoft.application.mapper.auth.AuthMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
@@ -17,20 +20,21 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class RefreshSessionTokenUseCase implements Function<String, Mono<TokenModel>> {
+public class RefreshSessionTokenUseCase implements Function<RefreshSessionRequest, Mono<RefreshSessionResponse>> {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtRepository jwtRepository;
     private final AuthRepository authRepository;
 
     @Override
-    public Mono<TokenModel> apply(String refreshToken) {
+    public Mono<RefreshSessionResponse> apply(RefreshSessionRequest request) {
         log.info("Iniciando proceso de refresh token");
-        return  refreshTokenRepository.findByToken(refreshToken)
+        return  refreshTokenRepository.findByToken(request.getRefreshToken())
                 .doOnNext(RefreshTokenModel::ensureValid)
                 .flatMap(this::loadActiveUser)
                 .flatMap(this::rotateSession)
-                .doOnSuccess(t -> log.info("Refresh successful"))
+                .map(AuthMapper::toRefreshSessionResponse)
+                .doOnSuccess(response -> log.info("Refresh successful"))
                 .doOnError(e -> log.warn("Refresh failed: {}", e.getMessage()));
     }
 

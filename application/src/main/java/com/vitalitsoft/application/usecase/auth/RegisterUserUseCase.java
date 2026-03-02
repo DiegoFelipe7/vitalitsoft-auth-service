@@ -1,6 +1,8 @@
 package com.vitalitsoft.application.usecase.auth;
 
 
+import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
+import com.vitalitsoft.application.mapper.auth.AuthMapper;
 import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
@@ -19,28 +21,28 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.util.UUID;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 
 @Slf4j
 @RequiredArgsConstructor
-public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEventModel, Mono<Void>> {
+public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<Void>> {
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
     private final EventsRepository<UserRegisterEventModel> eventsRepository;
     private final UserTokenRepository userTokenRepository;
 
     @Override
-    public Mono<Void> apply(AuthModel authModel, UserRegisterEventModel eventModel) {
+    public Mono<Void> apply(RegisterUserRequest request) {
 
-        log.info("Iniciando registro para: {}", authModel.getEmail());
+        log.info("Iniciando registro para: {}", request.getEmail());
 
-        return validateEmailNotExists(authModel.getEmail())
-                .then(hashPassword(authModel))
+        return validateEmailNotExists(request.getEmail())
+                .then(createAuthModel(request))
                 .flatMap(this::saveUserAndToken)
-                .flatMap(tuple -> publishEvent(tuple.getT1().getId(), tuple.getT2().getToken(), eventModel))
-                .doOnSuccess(unused -> log.info("Registro completado exitosamente para: {}", authModel.getEmail()))
-                .doOnError(error -> log.error("Error en registro de usuario {}: {}", authModel.getEmail(), error.getMessage()));
+                .flatMap(tuple -> publishEvent(tuple.getT1().getId(), tuple.getT2().getToken(), request))
+                .doOnSuccess(response -> log.info("Registro completado exitosamente para: {}", request.getEmail()))
+                .doOnError(error -> log.error("Error en registro de usuario {}: {}", request.getEmail(), error.getMessage()));
 
     }
 
@@ -56,6 +58,11 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
                     }
                     return Mono.empty();
                 });
+    }
+
+    private Mono<AuthModel> createAuthModel(RegisterUserRequest request) {
+        AuthModel authModel = AuthMapper.toAuthModel(request.getEmail(), request.getPassword());
+        return hashPassword(authModel);
     }
 
 
@@ -78,9 +85,15 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
     }
 
 
-    private Mono<Void> publishEvent(UUID userId, String token, UserRegisterEventModel eventModel) {
-        eventModel.setUserId(userId);
-        eventModel.setTokenActiveAccount(token);
+    private Mono<Void> publishEvent(UUID userId, String token, RegisterUserRequest request) {
+        UserRegisterEventModel eventModel = UserRegisterEventModel.builder()
+                .userId(userId)
+                .tokenActiveAccount(token)
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phoneNumber(request.getPhoneNumber())
+                .build();
 
         var routing = RabbitEventCatalog.resolve(UserEventType.USER_CREATED);
 
