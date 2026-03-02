@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.shared.constants;
+package co.com.bancolombia.security.mock.shared.constants;
 
 public final class HttpStatus {
     public static final int BAD_REQUEST = 400;

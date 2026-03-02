@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.shared.exception;
+package co.com.bancolombia.security.mock.shared.exception;
 
 import java.io.Serial;
 

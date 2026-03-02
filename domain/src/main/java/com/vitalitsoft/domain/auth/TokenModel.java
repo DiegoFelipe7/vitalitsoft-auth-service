@@ -1,11 +1,9 @@
-package com.vitalitsoft.domain.auth;
+package co.com.bancolombia.security.mock.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@With
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor

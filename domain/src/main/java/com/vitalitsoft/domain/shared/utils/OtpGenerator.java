@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.shared.utils;
+package co.com.bancolombia.security.mock.shared.utils;
 
 import java.security.SecureRandom;
 

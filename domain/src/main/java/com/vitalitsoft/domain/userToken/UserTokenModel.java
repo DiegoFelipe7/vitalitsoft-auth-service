@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.userToken;
+package co.com.bancolombia.security.mock.userToken;
 import com.vitalitsoft.domain.shared.enums.TokenType;
 import lombok.*;
 
@@ -7,7 +7,7 @@ import java.util.UUID;
 
 
 @Getter
-@Setter
+@With
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)

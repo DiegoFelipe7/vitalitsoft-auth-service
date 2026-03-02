@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.events.gateways;
+package co.com.bancolombia.security.mock.events.gateways;
 
 import reactor.core.publisher.Mono;
 

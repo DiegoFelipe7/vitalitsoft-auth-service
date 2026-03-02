@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.auth;
+package co.com.bancolombia.security.mock.auth;
 
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.Role;
@@ -12,8 +12,8 @@ import java.util.UUID;
 
 
 @Getter
-@Setter
-@Builder
+@With
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthModel {

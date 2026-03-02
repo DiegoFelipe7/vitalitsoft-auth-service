@@ -1,4 +1,4 @@
-package com.vitalitsoft.domain.shared.events;
+package co.com.bancolombia.security.mock.shared.events;
 
 
 import com.vitalitsoft.domain.events.model.RabbitEventRoutingModel;
