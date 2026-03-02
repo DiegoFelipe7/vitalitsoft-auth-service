@@ -35,6 +35,13 @@ public class VerifyOtpUseCase {
     }
 
     private Mono<OtpModel> validateOtpState(OtpModel otp) {
+        if (otp.hasExceededVerificationAttempts(MAX_ATTEMPTS)) {
+            return Mono.error(new NexusException(
+                    NexusException.Type.OTP_MAX_ATTEMPTS,
+                    HttpStatus.BAD_REQUEST
+            ));
+        }
+
         if (otp.isUsed()) {
             return Mono.error(new NexusException(
                     NexusException.Type.OTP_ALREADY_USED,
@@ -49,12 +56,6 @@ public class VerifyOtpUseCase {
             ));
         }
 
-        if (otp.getAttempts() >= MAX_ATTEMPTS) {
-            return Mono.error(new NexusException(
-                    NexusException.Type.OTP_MAX_ATTEMPTS,
-                    HttpStatus.BAD_REQUEST
-            ));
-        }
 
         return Mono.just(otp);
     }
@@ -75,7 +76,7 @@ public class VerifyOtpUseCase {
     }
 
     private Mono<Void> incrementAttempts(OtpModel otp) {
-        otp.setAttempts(otp.getAttempts() + 1);
+        otp.incrementAttempts();
         return otpRepository.save(otp).then();
     }
 

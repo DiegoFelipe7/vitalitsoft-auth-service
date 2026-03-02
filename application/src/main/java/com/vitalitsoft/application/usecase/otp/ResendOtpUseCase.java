@@ -20,7 +20,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ResendOtpUseCase implements Function<String, Mono<Void>> {
 
-    private static final int MAX_RESEND = 2;
+    private static final int MAX_RESEND = 3;
     private final AuthRepository authRepository;
     private final OtpRepository otpRepository;
     private final EventsRepository<SendOtpEventModel> eventPublisher;
@@ -38,7 +38,7 @@ public class ResendOtpUseCase implements Function<String, Mono<Void>> {
         if (otp.isUsed()) {
             return Mono.error(new NexusException(NexusException.Type.OTP_ALREADY_USED, HttpStatus.BAD_REQUEST));
         }
-        if (otp.canRetry(MAX_RESEND)) {
+        if (otp.hasExceededResendAttempts(MAX_RESEND)) {
             return Mono.error(new NexusException(NexusException.Type.OTP_MAX_RESEND_ATTEMPTS, HttpStatus.BAD_REQUEST));
         }
         return Mono.just(otp);
@@ -52,7 +52,7 @@ public class ResendOtpUseCase implements Function<String, Mono<Void>> {
         return encryptionRepository.hash(rawOtp)
                 .map(hashedOtp -> {
                     otp.setCode(hashedOtp);
-                    otp.incrementAttempts();
+                    otp.incrementResendAttempts();
                     otp.setUpdatedAt(LocalDateTime.now());
                     return otp;
                 })

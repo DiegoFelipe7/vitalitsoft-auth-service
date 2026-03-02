@@ -18,21 +18,30 @@ public class OtpModel {
     private String code;
     private Instant expiresAt;
     private int attempts;
+    private int resendAttempts;
     private boolean used;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
 
     public void incrementAttempts() {
-        this.attempts++;
+        this.attempts = this.attempts + 1;
+    }
+
+    public void incrementResendAttempts() {
+        this.resendAttempts++;
     }
 
     public boolean isExpired() {
         return Instant.now().isAfter(expiresAt);
     }
 
-    public boolean canRetry(int maxAttempts) {
+    public boolean hasExceededVerificationAttempts(int maxAttempts) {
         return attempts >= maxAttempts;
+    }
+
+    public boolean hasExceededResendAttempts(int maxAttempts) {
+        return resendAttempts >= maxAttempts;
     }
 
     public void markAsUsed() {
