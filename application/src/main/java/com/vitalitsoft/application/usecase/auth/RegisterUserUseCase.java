@@ -1,14 +1,14 @@
 package com.vitalitsoft.application.usecase.auth;
 
 
-import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
-import com.vitalitsoft.application.mapper.auth.AuthMapper;
+import com.vitalitsoft.application.dto.auth.response.RegisterUserResponse;
+import com.vitalitsoft.application.mapper.auth.AuthResponseMapper;
 import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
-import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
+import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.UserEventType;
 import com.vitalitsoft.domain.shared.events.RabbitEventCatalog;
@@ -21,28 +21,30 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 
 @Slf4j
 @RequiredArgsConstructor
-public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<Void>> {
+public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEventModel, Mono<RegisterUserResponse>> {
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
     private final EventsRepository<UserRegisterEventModel> eventsRepository;
     private final UserTokenRepository userTokenRepository;
 
     @Override
-    public Mono<Void> apply(RegisterUserRequest request) {
+    public Mono<RegisterUserResponse> apply(AuthModel authModel, UserRegisterEventModel eventModel) {
 
-        log.info("Iniciando registro para: {}", request.getEmail());
+        log.info("Iniciando registro para: {}", authModel.getEmail());
 
-        return validateEmailNotExists(request.getEmail())
-                .then(createAuthModel(request))
+        return validateEmailNotExists(authModel.getEmail())
+                .then(hashPassword(authModel))
                 .flatMap(this::saveUserAndToken)
-                .flatMap(tuple -> publishEvent(tuple.getT1().getId(), tuple.getT2().getToken(), request))
-                .doOnSuccess(response -> log.info("Registro completado exitosamente para: {}", request.getEmail()))
-                .doOnError(error -> log.error("Error en registro de usuario {}: {}", request.getEmail(), error.getMessage()));
+                .flatMap(tuple -> publishEvent(tuple.getT1().getId(), tuple.getT2().getToken(), eventModel)
+                        .thenReturn(tuple.getT1()))
+                .map(savedUser -> AuthResponseMapper.toRegisterUserResponse(savedUser.getId(), savedUser.getEmail()))
+                .doOnSuccess(response -> log.info("Registro completado exitosamente para: {}", response.getEmail()))
+                .doOnError(error -> log.error("Error en registro de usuario {}: {}", authModel.getEmail(), error.getMessage()));
 
     }
 
@@ -60,18 +62,10 @@ public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<V
                 });
     }
 
-    private Mono<AuthModel> createAuthModel(RegisterUserRequest request) {
-        AuthModel authModel = AuthMapper.toAuthModel(request.getEmail(), request.getPassword());
-        return hashPassword(authModel);
-    }
-
 
     private Mono<AuthModel> hashPassword(AuthModel authModel) {
         return hashingRepository.hash(authModel.getPassword())
-                .map(hashedPassword -> {
-                    authModel.setPassword(hashedPassword);
-                    return authModel;
-                });
+                .map(authModel::withPassword);
     }
 
     private Mono<Tuple2<AuthModel, UserTokenModel>> saveUserAndToken(AuthModel authModel) {
@@ -85,15 +79,9 @@ public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<V
     }
 
 
-    private Mono<Void> publishEvent(UUID userId, String token, RegisterUserRequest request) {
-        UserRegisterEventModel eventModel = UserRegisterEventModel.builder()
-                .userId(userId)
-                .tokenActiveAccount(token)
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .phoneNumber(request.getPhoneNumber())
-                .build();
+    private Mono<Void> publishEvent(UUID userId, String token, UserRegisterEventModel eventModel) {
+        eventModel.setUserId(userId);
+        eventModel.setTokenActiveAccount(token);
 
         var routing = RabbitEventCatalog.resolve(UserEventType.USER_CREATED);
 

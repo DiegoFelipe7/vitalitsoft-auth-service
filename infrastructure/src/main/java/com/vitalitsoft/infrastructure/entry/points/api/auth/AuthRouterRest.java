@@ -1,12 +1,12 @@
 package com.vitalitsoft.infrastructure.entry.points.api.auth;
 
-import com.vitalitsoft.application.dto.auth.LoginRequest;
-import com.vitalitsoft.application.dto.auth.RegisterUserRequest;
-import com.vitalitsoft.application.dto.passwordReset.ConfirmPasswordResetRequest;
-import com.vitalitsoft.application.dto.passwordReset.RequestResetPassword;
-import com.vitalitsoft.application.dto.passwordReset.ValidateTokenResetRequest;
-import com.vitalitsoft.application.dto.otp.ResendOtpRequest;
-import com.vitalitsoft.application.dto.otp.ValidateOtpRequest;
+import com.vitalitsoft.application.dto.auth.request.LoginRequest;
+import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
+import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
+import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
+import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
+import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
+import com.vitalitsoft.application.dto.passwordReset.request.ValidateTokenResetRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
+
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
@@ -215,7 +216,6 @@ public class AuthRouterRest {
         return route()
                 .POST("/auth/login", handler::login)
                 .POST("/auth/register", handler::register)
-                .POST("/auth/activate", handler::activateAccount)
                 .POST("/auth/request-reset-password", handler::requestResetPassword)
                 .POST("/auth/validate-reset-token", handler::validatePasswordResetToken)
                 .POST("/auth/confirm-reset-password", handler::confirmPasswordReset)

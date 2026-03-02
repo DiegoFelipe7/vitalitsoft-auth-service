@@ -1,8 +1,7 @@
 package com.vitalitsoft.application.usecase.otp;
 
-import com.vitalitsoft.application.dto.auth.response.LoginResponse;
-import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
-import com.vitalitsoft.application.mapper.auth.AuthMapper;
+import com.vitalitsoft.application.dto.otp.response.VerifyOtpResponse;
+import com.vitalitsoft.application.mapper.otp.OtpResponseMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
@@ -14,15 +13,16 @@ import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
-import java.util.function.Function;
 
+@Slf4j
 @RequiredArgsConstructor
-public class VerifyOtpUseCase implements Function<ValidateOtpRequest, Mono<LoginResponse>> {
+public class VerifyOtpUseCase {
     private static final int MAX_ATTEMPTS = 3;
     private final OtpRepository otpRepository;
     private final AuthRepository authRepository;
@@ -31,17 +31,16 @@ public class VerifyOtpUseCase implements Function<ValidateOtpRequest, Mono<Login
     private final RefreshTokenRepository refreshTokenRepository;
 
 
-    @Override
-    public Mono<LoginResponse> apply(ValidateOtpRequest request) {
-        log.info("Iniciando verificación de OTP para sessionId: {}", request.getSessionId());
+    public Mono<VerifyOtpResponse> apply(String sessionId, String otp, boolean inactiveTwoFactor) {
+        log.info("Iniciando verificación de OTP para sessionId: {}", sessionId);
         
-        return otpRepository.findBySessionId(request.getSessionId())
+        return otpRepository.findBySessionId(sessionId)
                 .flatMap(this::validateOtpState)
                 .delayElement(Duration.ofSeconds(3))
-                .flatMap(data -> verifyOtpCode(data, request.getOtp()))
+                .flatMap(data -> verifyOtpCode(data, otp))
                 .flatMap(this::markOtpAsUsed)
-                .flatMap(otpModel -> generateTokens(otpModel.getUserId(), request.isInactiveTwoFactor()))
-                .map(AuthMapper::toLoginResponse)
+                .flatMap(otpModel -> generateTokens(otpModel.getUserId(), inactiveTwoFactor))
+                .map(OtpResponseMapper::toVerifyOtpResponse)
                 .doOnSuccess(response -> log.info("OTP verificado exitosamente"))
                 .doOnError(error -> log.error("Error al verificar OTP: {}", error.getMessage()));
     }
@@ -73,33 +72,38 @@ public class VerifyOtpUseCase implements Function<ValidateOtpRequest, Mono<Login
     }
 
     private Mono<OtpModel> verifyOtpCode(OtpModel otp, String rawOtp) {
-
+        log.debug("Verificando código OTP para sessionId: {}", otp.getSessionId());
+        
         return hashingRepository.matches(rawOtp, otp.getCode())
                 .flatMap(match -> {
                     if (!match) {
+                        log.warn("OTP inválido para sessionId: {}", otp.getSessionId());
                         return incrementAttempts(otp)
                                 .then(Mono.error(new NexusException(
                                         NexusException.Type.OTP_INVALID,
                                         HttpStatus.BAD_REQUEST
                                 )));
                     }
+                    log.debug("OTP válido para sessionId: {}", otp.getSessionId());
                     return Mono.just(otp);
                 });
     }
 
     private Mono<Void> incrementAttempts(OtpModel otp) {
-        otp.incrementAttempts();
-        return otpRepository.save(otp).then();
+        OtpModel updatedOtp = otp.incrementAttempts();
+        return otpRepository.save(updatedOtp).then();
     }
 
     private Mono<OtpModel> markOtpAsUsed(OtpModel otp) {
-        otp.markAsUsed();
-        return otpRepository.save(otp);
+        log.debug("Marcando OTP como usado para sessionId: {}", otp.getSessionId());
+        OtpModel usedOtp = otp.markAsUsed();
+        return otpRepository.save(usedOtp);
     }
 
 
     private Mono<TokenModel> generateTokens(UUID userId, boolean disableTwoFactor) {
-
+        log.debug("Generando tokens para userId: {}", userId);
+        
         return authRepository.findById(userId)
                 .flatMap(user -> updateTwoFactorIfNeeded(user, disableTwoFactor))
                 .flatMap(this::issueTokens);
@@ -111,13 +115,15 @@ public class VerifyOtpUseCase implements Function<ValidateOtpRequest, Mono<Login
             return Mono.just(authModel);
         }
 
-        authModel.setTwoFactorNotRequiredUntil(LocalDate.now().plusDays(7));
+        log.debug("Deshabilitando 2FA temporalmente para: {}", authModel.getEmail());
+        AuthModel updatedModel = authModel.withTwoFactorNotRequiredUntil(LocalDate.now().plusDays(7));
 
-        return authRepository.save(authModel);
+        return authRepository.save(updatedModel);
     }
 
     private Mono<TokenModel> issueTokens(AuthModel user) {
-
+        log.debug("Emitiendo tokens para: {}", user.getEmail());
+        
         return jwtRepository.generateToken(
                         user.getEmail(),
                         user.getRole().name(),

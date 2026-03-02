@@ -3,15 +3,15 @@ package com.vitalitsoft.application.usecase.auth;
 
 import com.vitalitsoft.application.dto.auth.request.LoginRequest;
 import com.vitalitsoft.application.dto.auth.response.LoginResponse;
-import com.vitalitsoft.application.mapper.auth.AuthMapper;
+import com.vitalitsoft.application.mapper.auth.AuthResponseMapper;
 import com.vitalitsoft.application.mapper.otp.OtpMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
-import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.SendOtpEventModel;
+import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
@@ -21,12 +21,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-import java.util.function.Function;
 
 
 @Slf4j
 @RequiredArgsConstructor
-public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>> {
+public class LoginUseCase  {
 
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
@@ -35,15 +34,15 @@ public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>>
     private final OtpRepository otpRepository;
     private final EventsRepository<SendOtpEventModel> eventPublisher;
 
-    @Override
+
     public Mono<LoginResponse> apply(LoginRequest request) {
         log.info("Iniciando proceso de login para usuario: {}", request.getEmail());
 
         return authRepository.findByEmail(request.getEmail())
                 .doOnNext(AuthModel::ensureCanLogin)
-                .flatMap(user -> validatePassword(user, password))
+                .flatMap(user -> validatePassword(user, request.getPassword()))
                 .flatMap(this::processLoginFlow)
-                .map(AuthMapper::toLoginResponse)
+                .map(AuthResponseMapper::toLoginResponse)
                 .doOnSuccess(token -> log.info("Login successful for user: {}", request.getEmail()))
                 .doOnError(error -> log.warn("Login failed for user {}: {}", request.getEmail(), error.getMessage()));
     }
