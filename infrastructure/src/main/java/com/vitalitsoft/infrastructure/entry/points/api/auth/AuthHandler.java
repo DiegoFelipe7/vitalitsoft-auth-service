@@ -6,7 +6,8 @@ import com.vitalitsoft.application.dto.passwordReset.ConfirmPasswordResetRequest
 import com.vitalitsoft.application.dto.passwordReset.RequestResetPassword;
 import com.vitalitsoft.application.dto.passwordReset.ValidateTokenResetRequest;
 import com.vitalitsoft.application.mapper.auth.AuthMapper;
-import com.vitalitsoft.application.mapper.passwordReset.PasswordResetMapper;
+import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
+import com.vitalitsoft.application.usecase.auth.ActivateAccountUseCase;
 import com.vitalitsoft.application.usecase.auth.LoginUseCase;
 import com.vitalitsoft.application.usecase.auth.RegisterUserUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.ConfirmPasswordResetUseCase;
@@ -33,12 +34,13 @@ import com.vitalitsoft.application.dto.otp.ValidateOtpRequest;
 public class AuthHandler {
     private final LoginUseCase loginUseCase;
     private final RegisterUserUseCase registerUserUseCase;
+    private final ActivateAccountUseCase activateAccountUseCase;
     private final RequestResetPasswordUseCase requestResetPasswordUseCase;
     private final ValidatePasswordResetTokenUseCase validatePasswordResetTokenUseCase;
     private final ConfirmPasswordResetUseCase confirmPasswordResetUseCase;
-    private final ObjectValidator objectValidator;
     private final ResendOtpUseCase resendOtpUseCase;
     private final VerifyOtpUseCase verifyOtpUseCase;
+    private final ObjectValidator objectValidator;
 
 
     public Mono<ServerResponse> login(ServerRequest request) {
@@ -46,12 +48,8 @@ public class AuthHandler {
                 .flatMap(objectValidator::validate)
                 .flatMap(loginRequest -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                loginUseCase.apply(
-                                        loginRequest.getEmail(),
-                                        loginRequest.getPassword()),
-                                TokenModel.class
-                        ));
+                        .body(loginUseCase.apply(loginRequest.getEmail(), loginRequest.getPassword()), TokenModel.class)
+                );
     }
 
     public Mono<ServerResponse> register(ServerRequest request) {
@@ -59,8 +57,7 @@ public class AuthHandler {
                 .flatMap(objectValidator::validate)
                 .flatMap(registerRequest -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                registerUserUseCase.apply(
+                        .body(registerUserUseCase.apply(
                                         AuthMapper.toAuthModel(registerRequest.getEmail(), registerRequest.getPassword()),
                                         AuthMapper.toUserRegisterEventModel(registerRequest)
                                 ),
@@ -74,12 +71,7 @@ public class AuthHandler {
                 .flatMap(objectValidator::validate)
                 .flatMap(resetRequest -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                requestResetPasswordUseCase.apply(
-                                        PasswordResetMapper.toPasswordResetModel(resetRequest.getEmail())
-                                ),
-                                Void.class
-                        )
+                        .body(requestResetPasswordUseCase.apply(UserTokenMapper.toPasswordModel(resetRequest.getEmail())), Void.class)
                 );
     }
 
@@ -88,13 +80,7 @@ public class AuthHandler {
                 .flatMap(objectValidator::validate)
                 .flatMap(validateRequest -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                validatePasswordResetTokenUseCase.apply(
-                                        validateRequest.getToken(),
-                                        validateRequest.getTokenType()
-                                ),
-                                Boolean.class
-                        )
+                        .body(validatePasswordResetTokenUseCase.apply(validateRequest.getToken(), validateRequest.getTokenType()), Boolean.class)
                 );
     }
 
@@ -103,14 +89,7 @@ public class AuthHandler {
                 .flatMap(objectValidator::validate)
                 .flatMap(confirmRequest -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                confirmPasswordResetUseCase.apply(
-                                        confirmRequest.getToken(),
-                                        confirmRequest.getTokenType(),
-                                        confirmRequest.getPassword()
-                                ),
-                                Void.class
-                        )
+                        .body(confirmPasswordResetUseCase.apply(confirmRequest.getToken(), confirmRequest.getTokenType(), confirmRequest.getPassword()), Void.class)
                 );
     }
 
@@ -127,8 +106,9 @@ public class AuthHandler {
     public Mono<ServerResponse> verifyOtp(ServerRequest request) {
         return request.bodyToMono(ValidateOtpRequest.class)
                 .flatMap(objectValidator::validate)
-                .flatMap(req -> verifyOtpUseCase.apply(req.getOtp(), req.getSessionId(), req.isInactiveTwoFactor()))
-                .flatMap(response -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(response));
+                .flatMap(req -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(verifyOtpUseCase.apply(req.getOtp(), req.getSessionId(), req.isInactiveTwoFactor()), TokenModel.class));
     }
 
 }

@@ -9,6 +9,7 @@ import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.auth.mapper.AuthMapp
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -43,6 +44,7 @@ public class AuthReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     }
 
     @Override
+    @Transactional
     public Mono<AuthModel> save(AuthModel authModel) {
         return this.repository
                 .save(AuthMapper.mapToEntity(authModel))

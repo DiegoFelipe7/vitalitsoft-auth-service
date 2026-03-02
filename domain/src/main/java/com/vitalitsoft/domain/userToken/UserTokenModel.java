@@ -21,4 +21,8 @@ public class UserTokenModel {
     private LocalDateTime expirationTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public boolean isValid() {
+        return Boolean.FALSE.equals(this.used) && this.expirationTime.isAfter(LocalDateTime.now());
+    }
 }

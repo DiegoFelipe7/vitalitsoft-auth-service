@@ -1,5 +1,6 @@
 package com.vitalitsoft.infrastructure.entry.points.api.config;
 
+import com.vitalitsoft.application.usecase.auth.ActivateAccountUseCase;
 import com.vitalitsoft.application.usecase.auth.LoginUseCase;
 import com.vitalitsoft.application.usecase.auth.RegisterUserUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.ConfirmPasswordResetUseCase;
@@ -9,6 +10,7 @@ import com.vitalitsoft.application.usecase.otp.ResendOtpUseCase;
 import com.vitalitsoft.application.usecase.otp.VerifyOtpUseCase;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
+import com.vitalitsoft.domain.events.model.PasswordResetEventModel;
 import com.vitalitsoft.domain.events.model.SendOtpEventModel;
 import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
@@ -28,12 +30,17 @@ public class UseCasesConfig {
     }
 
     @Bean
-    public RegisterUserUseCase registerUserUseCase(AuthRepository authRepository, HashingRepository hashingRepository, EventsRepository<UserRegisterEventModel> eventsRepository) {
-        return new RegisterUserUseCase(authRepository, hashingRepository, eventsRepository);
+    public RegisterUserUseCase registerUserUseCase(AuthRepository authRepository, HashingRepository hashingRepository, EventsRepository<UserRegisterEventModel> eventsRepository, UserTokenRepository userTokenRepository) {
+        return new RegisterUserUseCase(authRepository, hashingRepository, eventsRepository, userTokenRepository);
     }
 
     @Bean
-    public RequestResetPasswordUseCase requestResetPasswordUseCase(AuthRepository authRepository, UserTokenRepository userTokenRepository, EventsRepository<String> eventsRepository) {
+    public ActivateAccountUseCase activateAccountUseCase(AuthRepository authRepository, UserTokenRepository userTokenRepository) {
+        return new ActivateAccountUseCase(authRepository, userTokenRepository);
+    }
+
+    @Bean
+    public RequestResetPasswordUseCase requestResetPasswordUseCase(AuthRepository authRepository, UserTokenRepository userTokenRepository, EventsRepository<PasswordResetEventModel> eventsRepository) {
         return new RequestResetPasswordUseCase(authRepository, userTokenRepository, eventsRepository);
     }
 
@@ -43,8 +50,8 @@ public class UseCasesConfig {
     }
 
     @Bean
-    public ConfirmPasswordResetUseCase confirmPasswordResetUseCase(UserTokenRepository userTokenRepository, AuthRepository authRepository) {
-        return new ConfirmPasswordResetUseCase(userTokenRepository, authRepository);
+    public ConfirmPasswordResetUseCase confirmPasswordResetUseCase(UserTokenRepository userTokenRepository, AuthRepository authRepository, HashingRepository hashingRepository) {
+        return new ConfirmPasswordResetUseCase(userTokenRepository, authRepository, hashingRepository);
     }
 
     @Bean

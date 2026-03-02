@@ -1,7 +1,6 @@
 package com.vitalitsoft.infrastructure.driven.adapters.security.jwt.provider;
 
 import com.vitalitsoft.domain.shared.enums.JwtType;
-import com.vitalitsoft.domain.shared.enums.TokenType;
 import com.vitalitsoft.infrastructure.driven.adapters.security.config.model.SecurityProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;

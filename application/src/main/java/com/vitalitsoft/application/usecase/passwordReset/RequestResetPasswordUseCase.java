@@ -2,6 +2,7 @@ package com.vitalitsoft.application.usecase.passwordReset;
 
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
+import com.vitalitsoft.domain.events.model.PasswordResetEventModel;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.UserEventType;
 import com.vitalitsoft.domain.shared.events.RabbitEventCatalog;
@@ -20,40 +21,31 @@ public class RequestResetPasswordUseCase implements Function<UserTokenModel, Mon
 
     private final AuthRepository authRepository;
     private final UserTokenRepository userTokenRepository;
-    private final EventsRepository<String> eventsRepository;
+    private final EventsRepository<PasswordResetEventModel> eventsRepository;
 
     @Override
-    public Mono<Void> apply(UserTokenModel request) {
-        log.info("Iniciando solicitud de restablecimiento de contraseña para: {}", request.getEmail());
-        
-        return authRepository.findByEmail(request.getEmail())
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("Solicitud de reset de contraseña para usuario inexistente: {}", request.getEmail());
-                    return Mono.error(new NexusException(
-                            NexusException.Type.USER_NOT_FOUND,
-                            HttpStatus.NOT_FOUND
-                    ));
-                }))
+    public Mono<Void> apply(UserTokenModel userTokenModel) {
+        log.info("Iniciando solicitud de restablecimiento de contraseña para: {}", userTokenModel.getEmail());
+
+        return authRepository.findByEmail(userTokenModel.getEmail())
                 .flatMap(user -> {
-                    log.debug("Usuario encontrado: {}, guardando solicitud de token", user.getEmail());
-                    request.setUserId(user.getId());
-                    return userTokenRepository.saveRequest(request)
-                            .doOnSuccess(saved -> log.info("Token de restablecimiento guardado para: {}", user.getEmail()))
-                            .doOnError(error -> log.error("Error al guardar token de restablecimiento para: {}", user.getEmail(), error));
+                    userTokenModel.setUserId(user.getId());
+                    return Mono.just(userTokenModel);
                 })
-                .flatMap(saved -> publishPasswordResetEvent(request.getEmail()))
-                .doOnSuccess(unused -> log.info("Proceso de solicitud de restablecimiento completado para: {}", request.getEmail()));
+                .flatMap(userTokenRepository::save)
+                .flatMap(saved -> publishEvent(userTokenModel.getEmail(), userTokenModel.getToken()))
+                .doOnSuccess(unused -> log.info("Proceso de solicitud de restablecimiento completado para: {}", userTokenModel.getEmail()));
     }
 
-    private Mono<Void> publishPasswordResetEvent(String email) {
+    private Mono<Void> publishEvent(String email, String token) {
         log.debug("Publicando evento de restablecimiento de contraseña para: {}", email);
         var routing = RabbitEventCatalog.resolve(UserEventType.USER_PASSWORD_RESET);
-        return eventsRepository.publish(routing.exchange(), routing.routingKey(), email)
+        return eventsRepository.publish(routing.exchange(), routing.routingKey(), PasswordResetEventModel.builder()
+                                .email(email)
+                                .token(token)
+                                .build())
                 .doOnSuccess(unused -> log.info("Evento '{}' publicado exitosamente para: {}", routing.exchange(), email))
-                .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), email, error))
-                .onErrorMap(error -> new NexusException(
-                        NexusException.Type.INTERNAL_ERROR,
-                        HttpStatus.INTERNAL_SERVER_ERROR
-                ));
+                .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), email, error));
+
     }
 }

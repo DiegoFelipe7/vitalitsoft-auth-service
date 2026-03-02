@@ -9,7 +9,6 @@ import com.vitalitsoft.domain.auth.gateways.JwtRepository;
 import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.SendOtpEventModel;
-import com.vitalitsoft.domain.otp.OtpModel;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;

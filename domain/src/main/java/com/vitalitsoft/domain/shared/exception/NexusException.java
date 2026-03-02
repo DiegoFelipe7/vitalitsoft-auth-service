@@ -28,6 +28,7 @@ public class NexusException extends CustomException {
         UNAUTHORIZED_ACCESS,
         TOKEN_ALREADY_USED,
         PENDING_VERIFICATION,
+        API_KEY_REQUIRED,
         MISSING_AUTH,
         INVALID_AUTH,
         INTERNAL_ERROR
