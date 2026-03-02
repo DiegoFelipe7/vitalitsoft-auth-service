@@ -11,5 +11,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ValidatePasswordResetTokenResponse {
     private Boolean isValid;
-    private String message;
 }

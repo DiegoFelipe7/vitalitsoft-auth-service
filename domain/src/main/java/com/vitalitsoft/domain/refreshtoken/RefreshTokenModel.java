@@ -2,7 +2,11 @@ package co.com.bancolombia.security.mock.refreshtoken;
 
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.exception.NexusException;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.With;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

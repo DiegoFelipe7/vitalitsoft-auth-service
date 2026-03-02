@@ -12,7 +12,7 @@ public final class UserTokenMapper {
         throw new IllegalStateException("Utility class");
     }
 
-    public static UserTokenModel toPasswordModel( String email) {
+    public static UserTokenModel toPasswordModel(String email) {
         return UserTokenModel.builder()
                 .email(email)
                 .token(UUID.randomUUID().toString())

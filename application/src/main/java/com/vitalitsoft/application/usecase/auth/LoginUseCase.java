@@ -3,7 +3,7 @@ package com.vitalitsoft.application.usecase.auth;
 
 import com.vitalitsoft.application.dto.auth.request.LoginRequest;
 import com.vitalitsoft.application.dto.auth.response.LoginResponse;
-import com.vitalitsoft.application.mapper.auth.AuthResponseMapper;
+import com.vitalitsoft.application.mapper.auth.AuthMapper;
 import com.vitalitsoft.application.mapper.otp.OtpMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
@@ -21,11 +21,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Function;
 
 
 @Slf4j
 @RequiredArgsConstructor
-public class LoginUseCase  {
+public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>> {
 
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
@@ -34,7 +35,7 @@ public class LoginUseCase  {
     private final OtpRepository otpRepository;
     private final EventsRepository<SendOtpEventModel> eventPublisher;
 
-
+    @Override
     public Mono<LoginResponse> apply(LoginRequest request) {
         log.info("Iniciando proceso de login para usuario: {}", request.getEmail());
 
@@ -42,7 +43,7 @@ public class LoginUseCase  {
                 .doOnNext(AuthModel::ensureCanLogin)
                 .flatMap(user -> validatePassword(user, request.getPassword()))
                 .flatMap(this::processLoginFlow)
-                .map(AuthResponseMapper::toLoginResponse)
+                .map(AuthMapper::toLoginResponse)
                 .doOnSuccess(token -> log.info("Login successful for user: {}", request.getEmail()))
                 .doOnError(error -> log.warn("Login failed for user {}: {}", request.getEmail(), error.getMessage()));
     }

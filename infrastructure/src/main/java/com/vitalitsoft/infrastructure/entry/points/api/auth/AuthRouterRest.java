@@ -2,11 +2,11 @@ package com.vitalitsoft.infrastructure.entry.points.api.auth;
 
 import com.vitalitsoft.application.dto.auth.request.LoginRequest;
 import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
-import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
-import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
 import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
 import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
 import com.vitalitsoft.application.dto.passwordReset.request.ValidateTokenResetRequest;
+import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
+import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -216,6 +216,7 @@ public class AuthRouterRest {
         return route()
                 .POST("/auth/login", handler::login)
                 .POST("/auth/register", handler::register)
+                .POST("/auth/activate", handler::activateAccount)
                 .POST("/auth/request-reset-password", handler::requestResetPassword)
                 .POST("/auth/validate-reset-token", handler::validatePasswordResetToken)
                 .POST("/auth/confirm-reset-password", handler::confirmPasswordReset)
