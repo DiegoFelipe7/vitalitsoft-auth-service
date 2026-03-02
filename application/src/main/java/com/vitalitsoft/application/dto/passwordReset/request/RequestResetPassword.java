@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.passwordReset;
+package com.vitalitsoft.application.dto.passwordReset.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
