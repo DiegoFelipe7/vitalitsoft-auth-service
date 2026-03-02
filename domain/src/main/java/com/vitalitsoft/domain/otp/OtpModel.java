@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-@Setter
+@With
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder(toBuilder = true)
@@ -24,12 +24,12 @@ public class OtpModel {
     private LocalDateTime updatedAt;
 
 
-    public void incrementAttempts() {
-        this.attempts = this.attempts + 1;
+    public OtpModel incrementAttempts() {
+        return this.withAttempts(this.attempts + 1);
     }
 
-    public void incrementResendAttempts() {
-        this.resendAttempts++;
+    public OtpModel incrementResendAttempts() {
+        return this.withResendAttempts(this.resendAttempts + 1);
     }
 
     public boolean isExpired() {
@@ -44,7 +44,7 @@ public class OtpModel {
         return resendAttempts >= maxAttempts;
     }
 
-    public void markAsUsed() {
-        this.used = true;
+    public OtpModel markAsUsed() {
+        return this.withUsed(true);
     }
 }

@@ -1,12 +1,12 @@
 package com.vitalitsoft.infrastructure.entry.points.api.auth;
 
-import com.vitalitsoft.application.dto.auth.LoginRequest;
-import com.vitalitsoft.application.dto.auth.RegisterUserRequest;
-import com.vitalitsoft.application.dto.passwordReset.ConfirmPasswordResetRequest;
-import com.vitalitsoft.application.dto.passwordReset.RequestResetPassword;
-import com.vitalitsoft.application.dto.passwordReset.ValidateTokenResetRequest;
-import com.vitalitsoft.application.dto.otp.ResendOtpRequest;
-import com.vitalitsoft.application.dto.otp.ValidateOtpRequest;
+import com.vitalitsoft.application.dto.auth.request.LoginRequest;
+import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
+import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
+import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
+import com.vitalitsoft.application.dto.passwordReset.request.ValidateTokenResetRequest;
+import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
+import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

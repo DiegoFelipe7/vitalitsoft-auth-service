@@ -1,17 +1,15 @@
-package com.vitalitsoft.domain.auth;
+package com.vitalitsoft.application.dto.otp.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.With;
 import lombok.NoArgsConstructor;
 
 @Getter
-@With
-@Builder(toBuilder = true)
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TokenModel{
+public class VerifyOtpResponse {
     private String token;
     private String refreshToken;
     private Boolean isTwoFactorAuthRequired;

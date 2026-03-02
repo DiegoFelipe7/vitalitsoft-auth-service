@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.passwordReset;
+package com.vitalitsoft.application.dto.passwordReset.request;
 
 import com.vitalitsoft.domain.shared.enums.TokenType;
 import jakarta.validation.constraints.NotBlank;

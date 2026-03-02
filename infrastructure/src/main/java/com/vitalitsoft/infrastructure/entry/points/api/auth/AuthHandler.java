@@ -1,10 +1,11 @@
 package com.vitalitsoft.infrastructure.entry.points.api.auth;
 
-import com.vitalitsoft.application.dto.auth.LoginRequest;
-import com.vitalitsoft.application.dto.auth.RegisterUserRequest;
-import com.vitalitsoft.application.dto.passwordReset.ConfirmPasswordResetRequest;
-import com.vitalitsoft.application.dto.passwordReset.RequestResetPassword;
-import com.vitalitsoft.application.dto.passwordReset.ValidateTokenResetRequest;
+import com.vitalitsoft.application.dto.auth.request.LoginRequest;
+import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
+import com.vitalitsoft.application.dto.auth.response.LoginResponse;
+import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
+import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
+import com.vitalitsoft.application.dto.passwordReset.request.ValidateTokenResetRequest;
 import com.vitalitsoft.application.mapper.auth.AuthMapper;
 import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
 import com.vitalitsoft.application.usecase.auth.ActivateAccountUseCase;
@@ -24,8 +25,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-import com.vitalitsoft.application.dto.otp.ResendOtpRequest;
-import com.vitalitsoft.application.dto.otp.ValidateOtpRequest;
+import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
+import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
 
 
 @Slf4j
@@ -48,7 +49,7 @@ public class AuthHandler {
                 .flatMap(objectValidator::validate)
                 .flatMap(loginRequest -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(loginUseCase.apply(loginRequest.getEmail(), loginRequest.getPassword()), TokenModel.class)
+                        .body(loginUseCase.apply(loginRequest), LoginResponse.class)
                 );
     }
 

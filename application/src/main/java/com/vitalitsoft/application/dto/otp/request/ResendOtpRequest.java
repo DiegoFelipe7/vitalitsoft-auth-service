@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.otp;
+package com.vitalitsoft.application.dto.otp.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

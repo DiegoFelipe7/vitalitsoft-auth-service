@@ -12,8 +12,8 @@ import java.util.UUID;
 
 
 @Getter
-@Setter
-@Builder
+@With
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthModel {

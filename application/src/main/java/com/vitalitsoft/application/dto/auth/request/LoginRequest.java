@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.auth;
+package com.vitalitsoft.application.dto.auth.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

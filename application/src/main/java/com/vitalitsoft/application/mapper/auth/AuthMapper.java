@@ -2,7 +2,7 @@ package com.vitalitsoft.application.mapper.auth;
 
 
 
-import com.vitalitsoft.application.dto.auth.RegisterUserRequest;
+import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
 import com.vitalitsoft.domain.shared.enums.Role;

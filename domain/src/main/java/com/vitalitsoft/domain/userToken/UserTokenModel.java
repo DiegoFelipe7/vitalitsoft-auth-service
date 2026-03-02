@@ -7,7 +7,7 @@ import java.util.UUID;
 
 
 @Getter
-@Setter
+@With
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)

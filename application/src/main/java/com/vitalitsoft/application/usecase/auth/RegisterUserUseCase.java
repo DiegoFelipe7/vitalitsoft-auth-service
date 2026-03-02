@@ -1,6 +1,8 @@
 package com.vitalitsoft.application.usecase.auth;
 
 
+import com.vitalitsoft.application.dto.auth.response.RegisterUserResponse;
+import com.vitalitsoft.application.mapper.auth.AuthResponseMapper;
 import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
@@ -24,22 +26,24 @@ import java.util.function.BiFunction;
 
 @Slf4j
 @RequiredArgsConstructor
-public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEventModel, Mono<Void>> {
+public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEventModel, Mono<RegisterUserResponse>> {
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
     private final EventsRepository<UserRegisterEventModel> eventsRepository;
     private final UserTokenRepository userTokenRepository;
 
     @Override
-    public Mono<Void> apply(AuthModel authModel, UserRegisterEventModel eventModel) {
+    public Mono<RegisterUserResponse> apply(AuthModel authModel, UserRegisterEventModel eventModel) {
 
         log.info("Iniciando registro para: {}", authModel.getEmail());
 
         return validateEmailNotExists(authModel.getEmail())
                 .then(hashPassword(authModel))
                 .flatMap(this::saveUserAndToken)
-                .flatMap(tuple -> publishEvent(tuple.getT1().getId(), tuple.getT2().getToken(), eventModel))
-                .doOnSuccess(unused -> log.info("Registro completado exitosamente para: {}", authModel.getEmail()))
+                .flatMap(tuple -> publishEvent(tuple.getT1().getId(), tuple.getT2().getToken(), eventModel)
+                        .thenReturn(tuple.getT1()))
+                .map(savedUser -> AuthResponseMapper.toRegisterUserResponse(savedUser.getId(), savedUser.getEmail()))
+                .doOnSuccess(response -> log.info("Registro completado exitosamente para: {}", response.getEmail()))
                 .doOnError(error -> log.error("Error en registro de usuario {}: {}", authModel.getEmail(), error.getMessage()));
 
     }
@@ -61,10 +65,7 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
 
     private Mono<AuthModel> hashPassword(AuthModel authModel) {
         return hashingRepository.hash(authModel.getPassword())
-                .map(hashedPassword -> {
-                    authModel.setPassword(hashedPassword);
-                    return authModel;
-                });
+                .map(authModel::withPassword);
     }
 
     private Mono<Tuple2<AuthModel, UserTokenModel>> saveUserAndToken(AuthModel authModel) {

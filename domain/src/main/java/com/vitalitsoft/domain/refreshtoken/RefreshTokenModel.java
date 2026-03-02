@@ -5,14 +5,16 @@ import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.With;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-@Setter
+@With
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder(toBuilder = true)
 public class RefreshTokenModel {
     private UUID id;
