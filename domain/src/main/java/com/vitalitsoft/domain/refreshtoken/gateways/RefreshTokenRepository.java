@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 public interface RefreshTokenRepository {
-    Mono<Void> save(String email, UUID userId , String token);
     Mono<RefreshTokenModel> findByToken(String token);
-    Mono<Void> revokeByEmail(String email);
+    Mono<Void> rotate(String email, UUID userId , String token);
+    Mono<Void> revokeTokenByUserId(UUID userId);
 }

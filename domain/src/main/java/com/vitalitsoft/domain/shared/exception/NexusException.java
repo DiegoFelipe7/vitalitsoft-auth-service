@@ -9,6 +9,7 @@ public class NexusException extends CustomException {
         USER_NOT_FOUND,
         INVALID_PASSWORD,
         REFRESH_INVALID_TOKEN,
+        EMAIL_ALREADY_EXISTS,
         INVALID_TOKEN,
         REFRESH_TOKEN_EXPIRED,
         TOKEN_EXPIRED,

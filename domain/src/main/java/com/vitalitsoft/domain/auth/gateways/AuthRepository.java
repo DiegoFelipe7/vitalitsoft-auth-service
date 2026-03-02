@@ -9,6 +9,7 @@ import java.util.UUID;
 public interface AuthRepository {
 
     Mono<AuthModel> findByEmail(String email);
+    Mono<Boolean> existsByEmail(String email);
     Mono<AuthModel> save(AuthModel authModel);
     Mono<AuthModel> findById(UUID id);
 }

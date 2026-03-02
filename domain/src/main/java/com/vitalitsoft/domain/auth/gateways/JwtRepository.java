@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono;
 public interface JwtRepository {
     Mono<TokenModel> generateToken(String email, String role , Boolean isTwoFactorAuthRequired);
     Mono<Boolean> validateToken(String token);
+    Mono<String> getSubject(String token);
     Mono<String> getEmailFromToken(String token);
 
 }

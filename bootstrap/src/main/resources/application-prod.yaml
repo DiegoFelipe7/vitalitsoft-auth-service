@@ -37,3 +37,5 @@ adapters:
       expiration: ${JWT_EXPIRATION}
       header: ${JWT_HEADER}
       prefix: ${JWT_PREFIX}
+      refresh_expiration: ${JWT_EXPIRATION_REFRESH_TOKEN}
+

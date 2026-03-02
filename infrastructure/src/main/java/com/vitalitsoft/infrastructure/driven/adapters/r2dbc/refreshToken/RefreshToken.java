@@ -9,7 +9,6 @@ import java.util.UUID;
 
 @Builder(toBuilder = true)
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "refresh_token")
@@ -23,4 +22,9 @@ public class RefreshToken {
     private LocalDateTime expirationTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void revoke() {
+        this.revoked = true;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

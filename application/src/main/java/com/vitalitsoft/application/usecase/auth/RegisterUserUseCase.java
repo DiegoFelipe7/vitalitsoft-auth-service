@@ -29,43 +29,26 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
 
         log.info("Iniciando registro para: {}", authModel.getEmail());
 
-        return validateEmailNotExists(authModel.getEmail())
-                .then(createUser(authModel))
-                .flatMap(savedUser -> publishEvent(savedUser, eventModel))
-                .doOnSuccess(unused ->
-                        log.info("Registro completado exitosamente para: {}", authModel.getEmail())
-                );
-    }
-
-    private Mono<Void> validateEmailNotExists(String email) {
-        return authRepository.findByEmail(email)
-                .hasElement()
+        return authRepository.existsByEmail(authModel.getEmail())
                 .flatMap(exists -> {
                     if (exists) {
-                        log.warn("Email ya registrado: {}", email);
-                        return Mono.error(new NexusException(
-                                NexusException.Type.EMAIL_ALREADY_REGISTERED,
-                                HttpStatus.CONFLICT
-                        ));
+                        log.warn("El email {} ya está registrado", authModel.getEmail());
+                        return Mono.error(new NexusException(NexusException.Type.EMAIL_ALREADY_EXISTS, HttpStatus.CONFLICT));
                     }
-                    return Mono.empty();
-                });
+                    return hashPassword(authModel);
+                })
+                .flatMap(authRepository::save)
+                .flatMap(savedUser -> publishEvent(savedUser, eventModel))
+                .doOnSuccess(unused -> log.info("Registro completado exitosamente para: {}", authModel.getEmail()));
     }
 
-    private Mono<AuthModel> createUser(AuthModel authModel) {
+
+    private Mono<AuthModel> hashPassword(AuthModel authModel) {
         return hashingRepository.hash(authModel.getPassword())
                 .map(hashedPassword -> {
                     authModel.setPassword(hashedPassword);
                     return authModel;
-                })
-                .flatMap(authRepository::save)
-                .doOnSuccess(user -> log.info("Usuario creado  para email: {}", authModel.getEmail()))
-                .onErrorMap(error ->
-                        new NexusException(
-                                NexusException.Type.INTERNAL_ERROR,
-                                HttpStatus.INTERNAL_SERVER_ERROR
-                        )
-                );
+                });
     }
 
 
@@ -79,11 +62,7 @@ public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEv
         return eventsRepository
                 .publish(routing.exchange(), routing.routingKey(), eventModel)
                 .doOnSuccess(unused -> log.info("Evento publicado correctamente para: {}", eventModel.getEmail()))
-                .onErrorMap(error ->
-                        new NexusException(
-                                NexusException.Type.INTERNAL_ERROR,
-                                HttpStatus.INTERNAL_SERVER_ERROR
-                        )
-                );
+                .doOnError(error -> log.error("Error al publicar evento para: {}. Error: {}", eventModel.getEmail(), error.getMessage()));
+
     }
 }

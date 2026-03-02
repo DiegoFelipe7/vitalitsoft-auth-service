@@ -2,6 +2,7 @@ package com.vitalitsoft.infrastructure.driven.adapters.security.jwt.adapter;
 
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
+import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.infrastructure.driven.adapters.security.jwt.provider.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,21 +20,26 @@ import java.util.List;
 public class JwtAdapter implements JwtRepository {
 
     private final JwtProvider jwtProvider;
+    private final HashingRepository hashingRepository;
 
     @Override
-    public Mono<TokenModel> generateToken(String email, String role , Boolean isTwoFactorAuthRequired) {
+    public Mono<TokenModel> generateToken(String email,
+                                          String role,
+                                          Boolean isTwoFactorAuthRequired) {
+
         Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+
         UserDetails userDetails = new User(email, "", authorities);
-        String accessToken = jwtProvider.generateAccessToken(userDetails);
-        String refreshToken = jwtProvider.generateRefreshToken(email);
 
-        TokenModel tokenModel = TokenModel.builder()
-                .token(accessToken)
-                .refreshToken(refreshToken)
-                .isTwoFactorAuthRequired(isTwoFactorAuthRequired)
-                .build();
+        String accessToken = jwtProvider.generateAccessToken(userDetails, email);
+        String rawRefreshToken = jwtProvider.generateRefreshToken(userDetails, email);
 
-        return Mono.just(tokenModel);
+        return hashingRepository.hash(rawRefreshToken)
+                .flatMap(hashedRefreshToken -> Mono.just(TokenModel.builder()
+                        .token(accessToken)
+                        .refreshToken(rawRefreshToken)
+                        .isTwoFactorAuthRequired(isTwoFactorAuthRequired)
+                        .build()));
     }
 
     @Override
@@ -41,9 +47,14 @@ public class JwtAdapter implements JwtRepository {
         return Mono.fromCallable(() -> jwtProvider.validate(token));
     }
 
+    @Override
+    public Mono<String> getSubject(String token) {
+        return Mono.fromCallable(() -> jwtProvider.getSubject(token));
+    }
+
 
     @Override
     public Mono<String> getEmailFromToken(String token) {
-        return Mono.fromCallable(() -> jwtProvider.getSubject(token));
+        return Mono.fromCallable(() -> jwtProvider.getClaims(token).get("email", String.class));
     }
 }

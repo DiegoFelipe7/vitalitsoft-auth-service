@@ -10,7 +10,6 @@ import java.util.UUID;
 
 @Builder(toBuilder = true)
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "user_token")

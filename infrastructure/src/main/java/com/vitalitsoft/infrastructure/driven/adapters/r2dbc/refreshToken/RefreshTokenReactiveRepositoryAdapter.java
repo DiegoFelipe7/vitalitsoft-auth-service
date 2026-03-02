@@ -3,13 +3,14 @@ package com.vitalitsoft.infrastructure.driven.adapters.r2dbc.refreshToken;
 
 import com.vitalitsoft.domain.refreshtoken.RefreshTokenModel;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.refreshToken.mapper.RefreshTokenMapper;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 import org.reactivecommons.utils.ObjectMapper;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -29,28 +30,26 @@ public class RefreshTokenReactiveRepositoryAdapter extends ReactiveAdapterOperat
 
 
     @Override
-    public Mono<Void> save(String email, UUID userId, String token) {
-        return repository.save(RefreshTokenMapper.mapToEntity(RefreshTokenModel.builder()
-                .email(email)
-                .userId(userId)
-                .token(token)
-                .expirationTime(LocalDateTime.now().plusDays(7))
-                .revoked(false)
-                .build())).then();
-    }
-
-    @Override
     public Mono<RefreshTokenModel> findByToken(String token) {
         return repository.findByToken(token)
+                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.TOKEN_NOT_FOUND, HttpStatus.UNAUTHORIZED)))
                 .map(RefreshTokenMapper::mapToModel);
     }
 
     @Override
-    public Mono<Void> revokeByEmail(String email) {
-        return this.repository.findAllByEmail(email)
+    public Mono<Void> rotate(String email, UUID userId, String token) {
+
+        return this.revokeTokenByUserId(userId)
+                .then(Mono.defer(() -> this.repository.save(RefreshTokenMapper.toEntity(userId, email, token)))).then();
+    }
+
+    @Override
+    public Mono<Void> revokeTokenByUserId(UUID userId) {
+        return this.repository.findAllByUserId(userId)
                 .flatMap(refreshToken -> {
-                    refreshToken.setRevoked(true);
+                    refreshToken.revoke();
                     return this.repository.save(refreshToken);
-                }).then();
+                })
+                .then();
     }
 }

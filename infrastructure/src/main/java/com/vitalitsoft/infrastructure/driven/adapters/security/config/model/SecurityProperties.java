@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record SecurityProperties(
         String secret,
         Long expiration,
+        Long refreshExpiration,
         String header,
         String prefix
 ) {

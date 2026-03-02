@@ -5,6 +5,7 @@ import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
 import java.util.function.Function;
 
 @RequiredArgsConstructor
@@ -15,8 +16,8 @@ public class LogoutUseCase implements Function<String, Mono<Void>> {
 
     @Override
     public Mono<Void> apply(String token) {
-        return jwtRepository.getEmailFromToken(token)
-                .flatMap(refreshTokenRepository::revokeByEmail)
+        return jwtRepository.getSubject(token)
+                .flatMap(ele -> refreshTokenRepository.revokeTokenByUserId(UUID.fromString(ele)))
                 .then();
     }
 }

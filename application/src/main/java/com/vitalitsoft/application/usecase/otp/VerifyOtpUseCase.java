@@ -13,6 +13,7 @@ import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -29,6 +30,7 @@ public class VerifyOtpUseCase {
     public Mono<TokenModel> apply(String sessionId, String otp, boolean inactiveTwoFactor) {
         return otpRepository.findBySessionId(sessionId)
                 .flatMap(this::validateOtpState)
+                .delayElement(Duration.ofSeconds(3))
                 .flatMap(data -> verifyOtpCode(data, otp))
                 .flatMap(this::markOtpAsUsed)
                 .flatMap(ele -> generateTokens(ele.getUserId(), inactiveTwoFactor));
@@ -106,16 +108,14 @@ public class VerifyOtpUseCase {
 
     private Mono<TokenModel> issueTokens(AuthModel user) {
 
-        return refreshTokenRepository
-                .revokeByEmail(user.getEmail())
-                .then(jwtRepository.generateToken(
-                        user.getId().toString(),
+        return jwtRepository.generateToken(
+                        user.getEmail(),
                         user.getRole().name(),
                         user.requiresTwoFactor()
-                ))
+                )
                 .flatMap(tokens ->
                         refreshTokenRepository
-                                .save(
+                                .rotate(
                                         user.getEmail(),
                                         user.getId(),
                                         tokens.getRefreshToken()

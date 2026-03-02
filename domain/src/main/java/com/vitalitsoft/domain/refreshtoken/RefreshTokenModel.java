@@ -1,9 +1,12 @@
 package com.vitalitsoft.domain.refreshtoken;
 
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.exception.NexusException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,4 +24,20 @@ public class RefreshTokenModel {
     private LocalDateTime expirationTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void ensureValid() {
+        if (this.revoked) {
+            throw new NexusException(
+                    NexusException.Type.REFRESH_INVALID_TOKEN,
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+
+        if (this.expirationTime.isBefore(LocalDateTime.now())) {
+            throw new NexusException(
+                    NexusException.Type.REFRESH_TOKEN_EXPIRED,
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+    }
 }
