@@ -1,41 +1,40 @@
 package com.vitalitsoft.application.usecase.passwordReset;
 
-import com.vitalitsoft.application.dto.passwordReset.response.ConfirmPasswordResetResponse;
-import com.vitalitsoft.application.mapper.passwordReset.PasswordResetResponseMapper;
+import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.hashing.HashingRepository;
-import com.vitalitsoft.domain.shared.enums.TokenType;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Function;
+
 @Slf4j
 @RequiredArgsConstructor
-public class ConfirmPasswordResetUseCase {
+public class ConfirmPasswordResetUseCase implements Function<ConfirmPasswordResetRequest, Mono<Void>> {
     private final UserTokenRepository userTokenRepository;
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
 
-    public Mono<ConfirmPasswordResetResponse> apply(String token, TokenType tokenType, String newPassword) {
-        log.info("Iniciando confirmación de restablecimiento de contraseña para token tipo: {}", tokenType);
+    @Override
+    public Mono<Void> apply(ConfirmPasswordResetRequest request) {
+        log.info("Iniciando confirmación de restablecimiento de contraseña para token tipo: {}", request.getTokenType());
 
-        return userTokenRepository.findByTokenAndType(token, tokenType)
+        return userTokenRepository.findByTokenAndType(request.getToken(), request.getTokenType())
                 .flatMap(userTokenModel ->
-                        updateUserPassword(userTokenModel.getEmail(), newPassword)
+                        updateUserPassword(userTokenModel.getEmail(), request.getPassword())
                                 .then(markTokenAsUsed(userTokenModel))
-                                .thenReturn(userTokenModel.getEmail())
                                 .doOnSuccess(email -> log.info("Token marcado como usado y contraseña actualizada para: {}", email))
                                 .doOnError(error -> log.error("Error al confirmar restablecimiento de contraseña", error)))
-                .map(PasswordResetResponseMapper::toConfirmPasswordResetResponse)
-                .doOnSuccess(response -> log.info("Contraseña restablecida exitosamente para: {}", response.getEmail()));
+                .doOnSuccess(response -> log.info("Contraseña restablecida exitosamente para: {}", request.getToken()));
     }
 
 
     private Mono<Void> updateUserPassword(String email, String rawPassword) {
         log.debug("Actualizando contraseña para: {}", email);
-        
+
         return authRepository.findByEmail(email)
                 .flatMap(user -> hashingRepository.hash(rawPassword)
                         .map(user::withPassword))

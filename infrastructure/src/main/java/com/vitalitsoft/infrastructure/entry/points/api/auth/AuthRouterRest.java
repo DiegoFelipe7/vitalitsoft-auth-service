@@ -215,6 +215,7 @@ public class AuthRouterRest {
         return route()
                 .POST("/auth/login", handler::login)
                 .POST("/auth/register", handler::register)
+                .POST("/auth/activate", handler::activateAccount)
                 .POST("/auth/request-reset-password", handler::requestResetPassword)
                 .POST("/auth/validate-reset-token", handler::validatePasswordResetToken)
                 .POST("/auth/confirm-reset-password", handler::confirmPasswordReset)
