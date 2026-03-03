@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.auth.gateways;
+package com.vitalitsoft.domain.auth.gateways;
 
 import com.vitalitsoft.domain.auth.TokenModel;
 import reactor.core.publisher.Mono;

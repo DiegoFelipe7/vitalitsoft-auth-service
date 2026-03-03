@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.refreshtoken;
+package com.vitalitsoft.domain.refreshtoken;
 
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.exception.NexusException;

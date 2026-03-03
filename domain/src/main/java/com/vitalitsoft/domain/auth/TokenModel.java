@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.auth;
+package com.vitalitsoft.domain.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

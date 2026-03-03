@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.otp;
+package com.vitalitsoft.domain.otp;
 
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.shared.enums;
+package com.vitalitsoft.domain.shared.enums;
 
 public enum TokenType {
     ACTIVATE_ACCOUNT,

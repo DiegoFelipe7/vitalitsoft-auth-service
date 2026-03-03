@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.auth;
+package com.vitalitsoft.domain.auth;
 
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.Role;

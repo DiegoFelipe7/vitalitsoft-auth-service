@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.events.model;
+package com.vitalitsoft.domain.events.model;
 
 import lombok.Builder;
 

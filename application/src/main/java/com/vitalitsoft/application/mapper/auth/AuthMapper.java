@@ -4,7 +4,6 @@ package com.vitalitsoft.application.mapper.auth;
 
 import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
 import com.vitalitsoft.application.dto.auth.response.LoginResponse;
-import com.vitalitsoft.application.dto.auth.response.RefreshSessionResponse;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
@@ -32,28 +31,9 @@ public final class AuthMapper {
 
 
 
-    public static UserRegisterEventModel toUserRegisterEventModel(RegisterUserRequest request) {
-        return UserRegisterEventModel.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .phoneNumber(request.getPhoneNumber())
-                .build();
-    }
-
 
     public static LoginResponse toLoginResponse(TokenModel tokenModel) {
         return LoginResponse.builder()
-                .token(tokenModel.getToken())
-                .refreshToken(tokenModel.getRefreshToken())
-                .isTwoFactorAuthRequired(tokenModel.getIsTwoFactorAuthRequired())
-                .build();
-    }
-
-
-
-    public static RefreshSessionResponse toRefreshSessionResponse(TokenModel tokenModel) {
-        return RefreshSessionResponse.builder()
                 .token(tokenModel.getToken())
                 .refreshToken(tokenModel.getRefreshToken())
                 .isTwoFactorAuthRequired(tokenModel.getIsTwoFactorAuthRequired())

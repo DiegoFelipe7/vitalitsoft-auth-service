@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.userToken.gateways;
+package com.vitalitsoft.domain.userToken.gateways;
 
 import com.vitalitsoft.domain.shared.enums.TokenType;
 import com.vitalitsoft.domain.userToken.UserTokenModel;

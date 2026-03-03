@@ -1,4 +1,5 @@
-package co.com.bancolombia.security.mock.userToken;
+package com.vitalitsoft.domain.userToken;
+
 import com.vitalitsoft.domain.shared.enums.TokenType;
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.refreshtoken.gateways;
+package com.vitalitsoft.domain.refreshtoken.gateways;
 
 import com.vitalitsoft.domain.refreshtoken.RefreshTokenModel;
 import reactor.core.publisher.Mono;

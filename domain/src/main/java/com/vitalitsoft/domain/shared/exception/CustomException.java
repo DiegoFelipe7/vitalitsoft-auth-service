@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.shared.exception;
+package com.vitalitsoft.domain.shared.exception;
 
 public class CustomException extends RuntimeException {
     private final String code;

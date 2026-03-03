@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.otp.gateways;
+package com.vitalitsoft.domain.otp.gateways;
 
 import com.vitalitsoft.domain.otp.OtpModel;
 import reactor.core.publisher.Mono;

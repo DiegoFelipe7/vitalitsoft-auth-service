@@ -1,4 +1,4 @@
-package co.com.bancolombia.security.mock.hashing;
+package com.vitalitsoft.domain.hashing;
 
 import reactor.core.publisher.Mono;
 
