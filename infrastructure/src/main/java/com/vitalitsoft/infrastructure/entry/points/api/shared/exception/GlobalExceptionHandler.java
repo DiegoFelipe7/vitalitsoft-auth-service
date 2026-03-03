@@ -23,6 +23,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
+import io.r2dbc.spi.R2dbcBadGrammarException;
+
 @Slf4j
 @Configuration
 @Order(-2)
@@ -60,9 +63,13 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
             return handleValidationException(validationException);
         } else if (ex instanceof InvalidFormatException invalidFormatException) {
             return handleInvalidFormatException(invalidFormatException);
+        } else if (ex instanceof R2dbcDataIntegrityViolationException integrityException) {
+            return handleR2dbcDataIntegrityViolationException(integrityException);
+        } else if (ex instanceof R2dbcBadGrammarException badGrammarException) {
+            return handleR2dbcBadGrammarException(badGrammarException);
         } else if (ex instanceof Exception exception) {
             return handleIllegalArgumentException(exception);
-        } else {
+        }  else {
             return handleGenericException(ex);
         }
     }
@@ -93,4 +100,15 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
     private ErrorResponse handleGenericException(Throwable ex) {
         return ErrorResponse.of(ex.getMessage() != null ? ex.getMessage() : "Error interno del servidor", HttpStatus.INTERNAL_SERVER_ERROR, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
     }
+
+    private ErrorResponse handleR2dbcDataIntegrityViolationException(R2dbcDataIntegrityViolationException ex) {
+        String details = "Violación de integridad de datos: " + ex.getMessage();
+        return ErrorResponse.of(details, HttpStatus.CONFLICT, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
+    }
+
+    private ErrorResponse handleR2dbcBadGrammarException(R2dbcBadGrammarException ex) {
+        String details = "Error de sintaxis SQL: " + ex.getMessage();
+        return ErrorResponse.of(details, HttpStatus.BAD_REQUEST, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
+    }
+
 }

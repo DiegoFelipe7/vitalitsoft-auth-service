@@ -48,7 +48,7 @@ public class UserTokenReactiveRepositoryAdapter extends ReactiveAdapterOperation
 
     @Override
     public Mono<Void> markAsUsed(UserTokenModel userToken) {
-        UserTokenModel usedToken = userToken.withUsed(true);
+        UserTokenModel usedToken = userToken.withId(userToken.getId()).withUsed(true);
         return this.repository
                 .save(UserTokenMapper.mapToEntity(usedToken))
                 .then();

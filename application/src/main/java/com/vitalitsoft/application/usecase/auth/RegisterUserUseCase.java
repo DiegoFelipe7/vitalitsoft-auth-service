@@ -40,7 +40,7 @@ public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<V
         return validateEmailNotExists(request.getEmail())
                 .then(createAuthModel(request))
                 .flatMap(this::saveUserAndToken)
-                .flatMap(tuple -> publishEvent(tuple.getT1().getId(), tuple.getT2().getToken(), request))
+                .flatMap(user -> publishEvent(user.getUserId(), user.getEmail(), request))
                 .doOnSuccess(response -> log.info("Registro completado exitosamente para: {}", request.getEmail()))
                 .doOnError(error -> log.error("Error en registro de usuario {}: {}", request.getEmail(), error.getMessage()));
 
@@ -71,14 +71,19 @@ public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<V
                 .map(authModel::withPassword);
     }
 
-    private Mono<Tuple2<AuthModel, UserTokenModel>> saveUserAndToken(AuthModel authModel) {
+    private Mono<UserTokenModel> saveUserAndToken(AuthModel authModel) {
         log.debug("Guardando usuario y generando token de activación para: {}", authModel.getEmail());
 
-        UserTokenModel tokenModel = UserTokenMapper.toActivateModel(authModel.getId(), authModel.getEmail());
 
-        return Mono.zip(authRepository.save(authModel), userTokenRepository.save(tokenModel))
-                .doOnSuccess(result -> log.debug("token generado para: {}", authModel.getEmail()))
-                .doOnError(error -> log.error("Error al guardar usuario {}: {}", authModel.getEmail(), error.getMessage()));
+        return authRepository.save(authModel)
+                .flatMap(auth -> {
+                            UserTokenModel tokenModel = UserTokenMapper.toActivateModel(auth.getId(), auth.getEmail());
+                            return userTokenRepository.save(tokenModel)
+                                    .doOnSuccess(result -> log.debug("token generado para: {}", authModel.getEmail()))
+                                    .doOnError(error -> log.error("Error al guardar usuario {}: {}", authModel.getEmail(), error.getMessage()));
+                        }
+                );
+
     }
 
 

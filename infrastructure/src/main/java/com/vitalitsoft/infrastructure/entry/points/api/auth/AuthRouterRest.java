@@ -1,7 +1,9 @@
 package com.vitalitsoft.infrastructure.entry.points.api.auth;
 
+import com.vitalitsoft.application.dto.auth.request.ActivateAccountRequest;
 import com.vitalitsoft.application.dto.auth.request.LoginRequest;
 import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
+import com.vitalitsoft.application.dto.auth.response.LoginResponse;
 import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
 import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
 import com.vitalitsoft.application.dto.passwordReset.request.ValidateTokenResetRequest;
@@ -45,7 +47,12 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Login exitoso"),
+                                    @ApiResponse(responseCode = "200", description = "Login exitoso",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = LoginResponse.class)
+                                            )
+                                    ),
                                     @ApiResponse(responseCode = "401", description = "Credenciales inválidas"),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
@@ -71,7 +78,8 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente"),
+                                    @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente",
+                                            content = @Content(schema = @Schema(type = "string", example = "Usuario registrado"))),
                                     @ApiResponse(responseCode = "409", description = "Email ya registrado"),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
@@ -97,7 +105,8 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Solicitud procesada"),
+                                    @ApiResponse(responseCode = "200", description = "Solicitud procesada",
+                                            content = @Content(schema = @Schema(type = "string", example = "Solicitud procesada"))),
                                     @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
@@ -123,7 +132,8 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Token válido"),
+                                    @ApiResponse(responseCode = "200", description = "Token válido",
+                                            content = @Content(schema = @Schema(type = "boolean", example = "true"))),
                                     @ApiResponse(responseCode = "400", description = "Token inválido o expirado"),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
@@ -149,7 +159,8 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Contraseña restablecida exitosamente"),
+                                    @ApiResponse(responseCode = "200", description = "Contraseña restablecida exitosamente",
+                                            content = @Content(schema = @Schema(type = "string", example = "Contraseña restablecida"))),
                                     @ApiResponse(responseCode = "400", description = "Token inválido o expirado"),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
@@ -175,7 +186,8 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "OTP enviado exitosamente"),
+                                    @ApiResponse(responseCode = "200", description = "OTP enviado exitosamente",
+                                            content = @Content(schema = @Schema(type = "string", example = "OTP enviado"))),
                                     @ApiResponse(responseCode = "400", description = "Solicitud inválida", content = @Content(schema = @Schema(type = "string", example = "Datos faltantes o incorrectos"))),
                                     @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content(schema = @Schema(type = "string", example = "Usuario no autenticado"))),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(schema = @Schema(type = "string", example = "Error al enviar OTP")))
@@ -202,10 +214,39 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "OTP válido", content = @Content(schema = @Schema(type = "string", example = "OTP validado correctamente"))),
+                                    @ApiResponse(responseCode = "200", description = "OTP válido",
+                                            content = @Content(schema = @Schema(implementation = com.vitalitsoft.application.dto.auth.response.LoginResponse.class))),
                                     @ApiResponse(responseCode = "400", description = "OTP inválido o expirado", content = @Content(schema = @Schema(type = "string", example = "OTP incorrecto o expirado"))),
                                     @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content(schema = @Schema(type = "string", example = "Usuario no autenticado"))),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(schema = @Schema(type = "string", example = "Error al validar OTP")))
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/auth/activate",
+                    produces = {"application/json"},
+                    method = RequestMethod.POST,
+                    beanClass = AuthHandler.class,
+                    beanMethod = "activateAccount",
+                    operation = @Operation(
+                            operationId = "activateAccount",
+                            summary = "Activar cuenta",
+                            description = "Activa la cuenta de usuario con el token recibido por email.",
+                            tags = {"Auth"},
+                            requestBody = @RequestBody(
+                                    description = "Datos para activar la cuenta (email, token)",
+                                    required = true,
+                                    content = @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = ActivateAccountRequest.class)
+                                    )
+                            ),
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "Cuenta activada exitosamente",
+                                            content = @Content(schema = @Schema(type = "string", example = "Cuenta activada"))),
+                                    @ApiResponse(responseCode = "400", description = "Token inválido o expirado"),
+                                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
                     )
             )
