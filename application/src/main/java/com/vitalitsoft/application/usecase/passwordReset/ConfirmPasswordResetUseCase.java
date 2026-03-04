@@ -1,51 +1,50 @@
 package com.vitalitsoft.application.usecase.passwordReset;
 
+import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
+import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.shared.enums.TokenType;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+import java.util.function.Function;
+
 @Slf4j
 @RequiredArgsConstructor
-public class ConfirmPasswordResetUseCase {
+public class ConfirmPasswordResetUseCase implements Function<ConfirmPasswordResetRequest, Mono<Void>> {
     private final UserTokenRepository userTokenRepository;
     private final AuthRepository authRepository;
+    private final HashingRepository hashingRepository;
 
-    public Mono<Void> apply(String token, TokenType tokenType, String newPassword) {
-        log.info("Iniciando confirmación de restablecimiento de contraseña para token tipo: {}", tokenType);
-        
-        return userTokenRepository.findByTokenAndType(token, tokenType)
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("Token inválido o expirado para tipo: {}", tokenType);
-                    return Mono.error(new NexusException(
-                            "TOKEN INVÁLIDO O EXPIRADO",
-                            HttpStatus.UNAUTHORIZED
-                    ));
-                }))
-                .flatMap(userTokenModel -> {
-                    log.debug("Token encontrado para email: {}", userTokenModel.getEmail());
-                    return authRepository.findByEmail(userTokenModel.getEmail())
-                            .switchIfEmpty(Mono.defer(() -> {
-                                log.error("Usuario no encontrado para email asociado al token: {}", userTokenModel.getEmail());
-                                return Mono.error(new NexusException(
-                                        "USUARIO NO ENCONTRADO",
-                                        HttpStatus.NOT_FOUND
-                                ));
-                            }))
-                            .flatMap(user -> {
-                                log.info("Actualizando contraseña para usuario: {}", user.getEmail());
-                                user.setPassword(newPassword);
-                                return authRepository.saveUser(user)
-                                        .doOnSuccess(userId -> log.info("Contraseña actualizada exitosamente para: {}", user.getEmail()))
-                                        .doOnError(error -> log.error("Error al actualizar contraseña para: {}", user.getEmail(), error));
-                            })
-                            .then(userTokenRepository.markAsUsed(userTokenModel))
-                            .doOnSuccess(unused -> log.info("Token marcado como usado para: {}", userTokenModel.getEmail()))
-                            .doOnError(error -> log.error("Error al marcar token como usado", error));
-                })
-                .doOnSuccess(unused -> log.info("Proceso de restablecimiento de contraseña completado exitosamente"));
+    @Override
+    public Mono<Void> apply(ConfirmPasswordResetRequest request) {
+        log.info("Iniciando confirmación de restablecimiento de contraseña para token tipo: {}", request.getTokenType());
+
+        return userTokenRepository.findByTokenAndType(request.getToken(), request.getTokenType())
+                .flatMap(userTokenModel -> updateUserPassword(userTokenModel, request.getPassword()))
+                .flatMap(this::markTokenAsUsed)
+                .doOnSuccess(email -> log.info("Token marcado como usado y contraseña actualizada para: {}", email))
+                .doOnError(error -> log.error("Error al confirmar restablecimiento de contraseña", error));
+
     }
+
+
+    private Mono<UUID> updateUserPassword(UserTokenModel userTokenModel, String rawPassword) {
+        log.debug("Actualizando contraseña para: {}", userTokenModel.getEmail());
+        return authRepository.findByEmail(userTokenModel.getEmail())
+                .flatMap(user -> hashingRepository.hash(rawPassword).map(user::withPassword))
+                .flatMap(res->authRepository.updatePassword(userTokenModel.getUserId(), res.getPassword()))
+                .thenReturn(userTokenModel.getUserId())
+                .doOnSuccess(unused -> log.debug("Contraseña actualizada exitosamente para: {}", userTokenModel.getEmail()));
+    }
+
+    private Mono<Void> markTokenAsUsed(UUID uuid) {
+        log.debug("Marcando token de reset como usado");
+        return userTokenRepository.markAsUsed(uuid);
+    }
+
 }

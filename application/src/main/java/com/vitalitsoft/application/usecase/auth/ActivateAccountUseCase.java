@@ -1,55 +1,55 @@
 package com.vitalitsoft.application.usecase.auth;
 
+import com.vitalitsoft.application.dto.auth.request.ActivateAccountRequest;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
+import com.vitalitsoft.domain.shared.enums.Status;
 import com.vitalitsoft.domain.shared.enums.TokenType;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-import java.util.function.BiFunction;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import java.util.function.Function;
 
 
 @Slf4j
 @RequiredArgsConstructor
-public class ActivateAccountUseCase implements BiFunction<String, TokenType, Mono<Void>> {
+public class ActivateAccountUseCase implements Function<ActivateAccountRequest, Mono<Void>> {
     private final AuthRepository authRepository;
     private final UserTokenRepository userTokenRepository;
 
     @Override
-    public Mono<Void> apply(String token, TokenType tokenType) {
-        log.info("Iniciando proceso de activación de cuenta con token tipo: {}", tokenType);
-        
-        return userTokenRepository.findByTokenAndType(token, tokenType)
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("Token no encontrado o inválido para tipo: {}", tokenType);
-                    return Mono.error(new NexusException(
-                            "TOKEN INVALIDO O EXPIRADO",
-                            HttpStatus.UNAUTHORIZED
-                    ));
-                }))
-                .flatMap(userToken -> {
-                    log.debug("Token válido encontrado para email: {}", userToken.getEmail());
-                    return authRepository.findByEmail(userToken.getEmail())
-                            .switchIfEmpty(Mono.defer(() -> {
-                                log.error("Usuario no encontrado para email asociado al token: {}", userToken.getEmail());
-                                return Mono.error(new NexusException(
-                                        "USUARIO NO ENCONTRADO",
-                                        HttpStatus.NOT_FOUND
-                                ));
-                            }))
-                            .flatMap(user -> {
-                                log.info("Activando cuenta para usuario: {}", user.getEmail());
-                                user.setStatus(Status.ACTIVE);
-                                return authRepository.saveUser(user)
-                                        .doOnSuccess(userId -> log.info("Usuario activado exitosamente: {}", user.getEmail()))
-                                        .doOnError(error -> log.error("Error al activar usuario: {}", user.getEmail(), error));
-                            })
-                            .then(userTokenRepository.markAsUsed(userToken))
-                            .doOnSuccess(unused -> log.info("Token marcado como usado para: {}", userToken.getEmail()))
-                            .doOnError(error -> log.error("Error al marcar token como usado", error));
-                })
-                .doOnSuccess(unused -> log.info("Proceso de activación completado exitosamente"));
+    public Mono<Void> apply(ActivateAccountRequest request) {
+        log.info("Iniciando proceso de activación de cuenta con token tipo: {}", TokenType.ACTIVATE_ACCOUNT);
+
+        return userTokenRepository.findByTokenAndType(request.getToken(), TokenType.ACTIVATE_ACCOUNT)
+                .doOnNext(UserTokenModel::verifyValidity)
+                .flatMap(this::activateUserAccount)
+                .flatMap(ele -> markTokenAsUsed(ele.getId()))
+                .doOnSuccess(unused -> log.info("Cuenta activada exitosamente - Token: {}", request.getToken()))
+                .doOnError(error -> log.error("Error en activación de cuenta - Token: {}, Error: {}", request.getToken(), error.getMessage()));
+
+    }
+
+    private Mono<UserTokenModel> activateUserAccount(UserTokenModel userTokenModel) {
+
+        return authRepository.findByEmail(userTokenModel.getEmail())
+                .map(user -> user
+                        .withId(user.getId())
+                        .withStatus(Status.ACTIVE)
+                        .withUpdatedAt(LocalDateTime.now())
+                )
+                .flatMap(res -> authRepository.updateStatus(res.getId(), res.getStatus()))
+                .doOnSuccess(unused -> log.debug("Estado actualizado para: {}", userTokenModel.getEmail()))
+                .doOnError(error -> log.error("Error al actualizar estado del usuario: {}", userTokenModel.getEmail(), error))
+                .thenReturn(userTokenModel);
+    }
+
+    private Mono<Void> markTokenAsUsed(UUID uuid) {
+        log.debug("Marcando token como usado");
+        return userTokenRepository.markAsUsed(uuid);
     }
 }

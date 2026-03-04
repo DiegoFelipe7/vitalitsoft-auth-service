@@ -1,15 +1,14 @@
 package com.vitalitsoft.infrastructure.entry.points.api.shared.exception;
 
-import co.com.nexus.api.shared.utilities.ExceptionUtils;
-import co.com.nexus.model.shared.exception.NexusException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.infrastructure.entry.points.api.shared.utilities.ExceptionUtils;
+import tools.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
+import org.springframework.boot.webflux.error.ErrorWebExceptionHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -23,6 +22,9 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
+import io.r2dbc.spi.R2dbcBadGrammarException;
 
 @Slf4j
 @Configuration
@@ -46,7 +48,7 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
         try {
             dataBuffer = bufferFactory.wrap(objectMapper.writeValueAsBytes(errorResponse));
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             log.error("Error al serializar la respuesta de error", e);
             dataBuffer = bufferFactory.wrap("Error interno del servidor".getBytes());
         }
@@ -61,9 +63,13 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
             return handleValidationException(validationException);
         } else if (ex instanceof InvalidFormatException invalidFormatException) {
             return handleInvalidFormatException(invalidFormatException);
+        } else if (ex instanceof R2dbcDataIntegrityViolationException integrityException) {
+            return handleR2dbcDataIntegrityViolationException(integrityException);
+        } else if (ex instanceof R2dbcBadGrammarException badGrammarException) {
+            return handleR2dbcBadGrammarException(badGrammarException);
         } else if (ex instanceof Exception exception) {
             return handleIllegalArgumentException(exception);
-        } else {
+        }  else {
             return handleGenericException(ex);
         }
     }
@@ -94,4 +100,15 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
     private ErrorResponse handleGenericException(Throwable ex) {
         return ErrorResponse.of(ex.getMessage() != null ? ex.getMessage() : "Error interno del servidor", HttpStatus.INTERNAL_SERVER_ERROR, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
     }
+
+    private ErrorResponse handleR2dbcDataIntegrityViolationException(R2dbcDataIntegrityViolationException ex) {
+        String details = "Violación de integridad de datos: " + ex.getMessage();
+        return ErrorResponse.of(details, HttpStatus.CONFLICT, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
+    }
+
+    private ErrorResponse handleR2dbcBadGrammarException(R2dbcBadGrammarException ex) {
+        String details = "Error de sintaxis SQL: " + ex.getMessage();
+        return ErrorResponse.of(details, HttpStatus.BAD_REQUEST, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
+    }
+
 }

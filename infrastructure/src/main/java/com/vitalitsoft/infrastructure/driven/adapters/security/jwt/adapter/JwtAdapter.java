@@ -21,12 +21,22 @@ public class JwtAdapter implements JwtRepository {
     private final JwtProvider jwtProvider;
 
     @Override
-    public Mono<TokenModel> generateToken(String email, String role) {
-        return Mono.fromCallable(() -> {
-            Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
-            UserDetails userDetails = new User(email, "", authorities);
-            return new TokenModel(jwtProvider.generateAccessToken(userDetails), jwtProvider.generateRefreshToken(email));
-        });
+    public Mono<TokenModel> generateToken(String email,
+                                          String role,
+                                          Boolean isTwoFactorAuthRequired) {
+
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+
+        UserDetails userDetails = new User(email, "", authorities);
+
+        String accessToken = jwtProvider.generateAccessToken(userDetails, email);
+        String rawRefreshToken = jwtProvider.generateRefreshToken(userDetails, email);
+
+        return Mono.just(TokenModel.builder()
+                .accessToken(accessToken)
+                .refreshToken(rawRefreshToken)
+                .isTwoFactorAuthRequired(isTwoFactorAuthRequired)
+                .build());
     }
 
     @Override
@@ -34,9 +44,14 @@ public class JwtAdapter implements JwtRepository {
         return Mono.fromCallable(() -> jwtProvider.validate(token));
     }
 
+    @Override
+    public Mono<String> getSubject(String token) {
+        return Mono.fromCallable(() -> jwtProvider.getSubject(token));
+    }
+
 
     @Override
     public Mono<String> getEmailFromToken(String token) {
-        return Mono.fromCallable(() -> jwtProvider.getSubject(token));
+        return Mono.fromCallable(() -> jwtProvider.getClaims(token).get("email", String.class));
     }
 }

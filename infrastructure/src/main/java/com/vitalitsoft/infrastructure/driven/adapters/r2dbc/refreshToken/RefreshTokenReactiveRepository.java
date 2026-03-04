@@ -8,6 +8,6 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 public interface RefreshTokenReactiveRepository extends ReactiveCrudRepository<RefreshToken, UUID>, ReactiveQueryByExampleExecutor<RefreshToken> {
-    Flux<RefreshToken> findAllByEmail(String email);
+    Flux<RefreshToken> findAllByUserId(UUID userId);
     Mono<RefreshToken> findByToken(String token);
 }

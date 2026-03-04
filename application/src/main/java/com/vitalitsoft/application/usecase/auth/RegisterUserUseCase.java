@@ -1,65 +1,105 @@
 package com.vitalitsoft.application.usecase.auth;
 
-import co.com.bancolombia.model.auth.AuthModel;
-import co.com.bancolombia.model.auth.gateways.AuthRepository;
-import co.com.bancolombia.model.auth.gateways.PasswordRepository;
-import co.com.bancolombia.model.events.gateways.EventsRepository;
-import co.com.bancolombia.model.events.model.UserRegisterEventModel;
-import co.com.bancolombia.model.shared.constants.HttpStatus;
-import co.com.bancolombia.model.shared.enums.UserEventType;
-import co.com.bancolombia.model.shared.events.RabbitEventCatalog;
-import co.com.bancolombia.model.shared.exception.NexusException;
+
+import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
+import com.vitalitsoft.application.mapper.auth.AuthMapper;
+import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
+import com.vitalitsoft.domain.auth.AuthModel;
+import com.vitalitsoft.domain.auth.gateways.AuthRepository;
+import com.vitalitsoft.domain.events.gateways.EventsRepository;
+import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
+import com.vitalitsoft.domain.hashing.HashingRepository;
+import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.enums.UserEventType;
+import com.vitalitsoft.domain.shared.events.RabbitEventCatalog;
+import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.userToken.UserTokenModel;
+import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-import java.util.function.BiFunction;
+import java.util.UUID;
+import java.util.function.Function;
+
 
 @Slf4j
 @RequiredArgsConstructor
-public class RegisterUserUseCase implements BiFunction<AuthModel, UserRegisterEventModel, Mono<Void>> {
+public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<Void>> {
     private final AuthRepository authRepository;
-    private final PasswordRepository passwordRepository;
+    private final HashingRepository hashingRepository;
     private final EventsRepository<UserRegisterEventModel> eventsRepository;
+    private final UserTokenRepository userTokenRepository;
 
     @Override
-    public Mono<Void> apply(AuthModel authModel, UserRegisterEventModel userRegisterEventModel) {
-        log.info("Iniciando proceso de registro para el usuario: {}", authModel.getEmail());
-        return authRepository.findByEmail(authModel.getEmail())
-                .flatMap(existing -> {
-                    log.warn("Intento de registro con email ya existente: {}", authModel.getEmail());
-                    return Mono.error(new NexusException(
-                            "EL EMAIL YA SE ENCUENTRA REGISTRADO",
-                            HttpStatus.CONFLICT
-                    ));
-                })
-                .switchIfEmpty(
-                        Mono.defer(() -> {
-                            log.debug("Email disponible, procediendo con encriptación de contraseña para: {}", authModel.getEmail());
-                            String hashed = passwordRepository.encryptPassword(authModel.getPassword());
-                            authModel.setPassword(hashed);
-                            return authRepository.saveUser(authModel)
-                                    .doOnSuccess(userId -> log.info("Usuario guardado exitosamente con ID: {} para email: {}", userId, authModel.getEmail()))
-                                    .flatMap(userId -> {
-                                        userRegisterEventModel.setUserId(userId);
-                                        return publishUserRegisteredEvent(userRegisterEventModel);
-                                    })
-                                    .doOnError(error -> log.error("Error al guardar usuario: {}", authModel.getEmail(), error));
-                        })
-                )
-                .then()
-                .doOnSuccess(unused -> log.info("Registro completado exitosamente para: {}", authModel.getEmail()));
+    public Mono<Void> apply(RegisterUserRequest request) {
+
+        log.info("Iniciando registro para: {}", request.getEmail());
+
+        return validateEmailNotExists(request.getEmail())
+                .then(createAuthModel(request))
+                .flatMap(this::saveUserAndToken)
+                .flatMap(user -> publishEvent(user.getUserId(), user.getEmail(), request))
+                .doOnSuccess(response -> log.info("Registro completado exitosamente para: {}", request.getEmail()))
+                .doOnError(error -> log.error("Error en registro de usuario {}: {}", request.getEmail(), error.getMessage()));
+
     }
 
-    private Mono<Void> publishUserRegisteredEvent(UserRegisterEventModel event) {
-        log.debug("Publicando evento de registro para: {}", event.getEmail());
+    private Mono<Void> validateEmailNotExists(String email) {
+        return authRepository.existsByEmail(email)
+                .flatMap(exists -> {
+                    if (exists) {
+                        log.warn("Intento de registro con email ya existente: {}", email);
+                        return Mono.error(new NexusException(
+                                NexusException.Type.EMAIL_ALREADY_EXISTS,
+                                HttpStatus.CONFLICT
+                        ));
+                    }
+                    return Mono.empty();
+                });
+    }
+
+    private Mono<AuthModel> createAuthModel(RegisterUserRequest request) {
+        AuthModel authModel = AuthMapper.toAuthModel(request.getEmail(), request.getPassword());
+        return hashPassword(authModel);
+    }
+
+
+    private Mono<AuthModel> hashPassword(AuthModel authModel) {
+        return hashingRepository.hash(authModel.getPassword())
+                .map(authModel::withPassword);
+    }
+
+    private Mono<UserTokenModel> saveUserAndToken(AuthModel authModel) {
+        log.debug("Guardando usuario y generando token de activación para: {}", authModel.getEmail());
+
+
+        return authRepository.save(authModel)
+                .flatMap(auth -> {
+                            UserTokenModel tokenModel = UserTokenMapper.toActivateModel(auth.getId(), auth.getEmail());
+                            return userTokenRepository.save(tokenModel)
+                                    .doOnSuccess(result -> log.debug("token generado para: {}", authModel.getEmail()))
+                                    .doOnError(error -> log.error("Error al guardar usuario {}: {}", authModel.getEmail(), error.getMessage()));
+                        }
+                );
+
+    }
+
+
+    private Mono<Void> publishEvent(UUID userId, String token, RegisterUserRequest request) {
+        UserRegisterEventModel eventModel = UserRegisterEventModel.builder()
+                .userId(userId)
+                .tokenActiveAccount(token)
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phoneNumber(request.getPhoneNumber())
+                .build();
+
         var routing = RabbitEventCatalog.resolve(UserEventType.USER_CREATED);
-        return eventsRepository.publish(routing.exchange(), routing.routingKey(), event)
-                .doOnSuccess(unused -> log.info("Evento '{}' publicado exitosamente para: {}", routing.exchange(), event.getEmail()))
-                .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), event.getEmail(), error))
-                .onErrorMap(error -> new NexusException(
-                        "Error al publicar evento de registro: " + error.getMessage(),
-                        HttpStatus.BAD_REQUEST
-                ));
+
+        return eventsRepository.publish(routing.exchange(), routing.routingKey(), eventModel)
+                .doOnSuccess(unused -> log.info("Evento USER_CREATED publicado para {}", eventModel.getEmail()))
+                .doOnError(error -> log.error("Error al publicar evento USER_CREATED para {}: {}", eventModel.getEmail(), error.getMessage()));
     }
 }

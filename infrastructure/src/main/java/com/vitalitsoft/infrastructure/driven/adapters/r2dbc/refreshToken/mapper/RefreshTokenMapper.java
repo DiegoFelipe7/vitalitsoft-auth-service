@@ -4,6 +4,9 @@ package com.vitalitsoft.infrastructure.driven.adapters.r2dbc.refreshToken.mapper
 import com.vitalitsoft.domain.refreshtoken.RefreshTokenModel;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.refreshToken.RefreshToken;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 public class RefreshTokenMapper {
 
     private RefreshTokenMapper() {
@@ -33,6 +36,18 @@ public class RefreshTokenMapper {
                 .expirationTime(refreshTokenModel.getExpirationTime())
                 .updatedAt(refreshTokenModel.getUpdatedAt())
                 .createdAt(refreshTokenModel.getCreatedAt())
+                .build();
+    }
+
+    public static RefreshToken toEntity(UUID userId, String email, String token) {
+        return RefreshToken.builder()
+                .userId(userId)
+                .email(email)
+                .token(token)
+                .revoked(false)
+                .expirationTime(LocalDateTime.now().plusDays(7))
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 

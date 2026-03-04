@@ -1,97 +1,61 @@
-CREATE TABLE document_types (
-                                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                code VARCHAR(50) NOT NULL UNIQUE,
-                                name VARCHAR(150) NOT NULL,
-                                description TEXT,
-                                active BOOLEAN NOT NULL DEFAULT true,
-                                search_key NOT NULL  VARCHAR(100),
-                                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE IF NOT EXISTS auth_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    two_factor_not_required_until DATE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS refresh_token (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    expiration_time TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_refresh_token_user
+    FOREIGN KEY (user_id)
+    REFERENCES auth_users(id)
+    ON DELETE CASCADE
+    );
+
+CREATE TABLE IF NOT EXISTS user_token (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    token_type VARCHAR(32) NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    expiration_time TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_token_user
+    FOREIGN KEY (user_id)
+    REFERENCES auth_users(id)
+    ON DELETE CASCADE
 );
 
 
-CREATE TABLE insurances (
-                            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                            name VARCHAR(150) NOT NULL,
-                            policy_number VARCHAR(100) NOT NULL UNIQUE,
-                            type VARCHAR(50) NOT NULL,
-                            active BOOLEAN NOT NULL DEFAULT true,
-                            search_key NOT NULL  VARCHAR(100),
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS otp (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    session_id VARCHAR(255) NOT NULL,
+    code VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    attempts INT NOT NULL DEFAULT 0,
+    resend_attempts INT NOT NULL DEFAULT 0,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_otp_user
+    FOREIGN KEY (user_id)
+    REFERENCES auth_users(id)
+    ON DELETE CASCADE
 );
-
-CREATE TABLE medical_centers (
-                                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                 nit VARCHAR(50) NOT NULL UNIQUE,
-                                 center_type VARCHAR(50) NOT NULL,
-                                 name VARCHAR(150) NOT NULL,
-                                 email VARCHAR(150),
-                                 phone VARCHAR(50),
-                                 description TEXT,
-                                 address VARCHAR(255),
-                                 country VARCHAR(100),
-                                 city VARCHAR(100),
-                                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE medical_center_branches (
-                                         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                         medical_center_id UUID NOT NULL,
-                                         name VARCHAR(150) NOT NULL,
-                                         address VARCHAR(255) NOT NULL,
-                                         city VARCHAR(100) NOT NULL,
-                                         country VARCHAR(100) NOT NULL,
-                                         phone VARCHAR(50),
-                                         email VARCHAR(150),
-                                         active BOOLEAN NOT NULL DEFAULT true,
-                                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                                         CONSTRAINT fk_branch_center
-                                             FOREIGN KEY (medical_center_id)
-                                                 REFERENCES medical_centers(id)
-                                                 ON DELETE CASCADE
-);
-
-CREATE TABLE specialties (
-                             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                             name VARCHAR(150) NOT NULL,
-                             active BOOLEAN NOT NULL DEFAULT true,
-                             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                             updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE medical_services (
-                                  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                  code VARCHAR(50) NOT NULL UNIQUE,
-                                  name VARCHAR(150) NOT NULL,
-                                  active BOOLEAN NOT NULL DEFAULT true,
-                                  search_key VARCHAR(100) NOT NULL,
-                                  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE specialty_service(
-                                  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                                  specialty_id UUID NOT NULL,
-                                  medical_service_id UUID NOT NULL,
-                                  duration INTEGER NOT NULL,
-                                  price DECIMAL(10, 2) NOT NULL,
-                                  search_key VARCHAR(100) NOT NULL,
-                                  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-
-                              constraint fk_specialty
-                                  foreign key (specialty_id)
-                                      references specialties(id)
-                                      on delete cascade,
-
-                                constraint fk_medical_service
-                                  foreign key (medical_service_id)
-                                      references medical_services(id)
-                                      on delete cascade
-
-
-)
