@@ -38,3 +38,40 @@ adapters:
       header: ${JWT_HEADER}
       prefix: ${JWT_PREFIX}
       refresh_expiration: ${JWT_EXPIRATION_REFRESH_TOKEN}
+  rabbitmq:
+    host: ${RABBIT_HOST}
+    port: ${RABBIT_PORT}
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+    virtual-host: ${RABBIT_VIRTUAL_HOST}
+    connection-timeout: ${RABBIT_CONNECTION_TIMEOUT}
+    exchanges:
+      - "vitalitsoft.auth.events"
+      - "vitalitsoft.user.events"
+    routing-keys:
+      - "user.created.v1"
+      - "user.login.v1"
+      - "password.reset.requested.v1"
+    queues:
+      - "queue.auth.v1"
+      - "queue.user.v1"
+    #bindings:
+     # - exchange: "vitalitsoft.auth.events"
+     #   routingKey: "user.created.v1"
+     #   queue: "queue.auth.v1"
+      #- exchange: "vitalitsoft.auth.events"
+     ##   routingKey: "password.reset.requested.v1"
+       # queue: "queue.auth.v1"
+    bindings:
+      USER_CREATED:
+        exchange: "vitalitsoft.auth.events"
+        routingKey: "user.created.v1"
+        queue: "queue.auth.v1"
+      USER_PASSWORD_RESET:
+        exchange: "vitalitsoft.auth.events"
+        routingKey: "password.reset.requested.v1"
+        queue: "queue.auth.v1"
+
+
+
+

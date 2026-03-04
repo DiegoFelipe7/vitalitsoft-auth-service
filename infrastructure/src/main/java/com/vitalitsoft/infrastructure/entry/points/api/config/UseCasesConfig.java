@@ -8,6 +8,7 @@ import com.vitalitsoft.application.usecase.otp.ResendOtpUseCase;
 import com.vitalitsoft.application.usecase.otp.VerifyOtpUseCase;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
+import com.vitalitsoft.domain.events.gateways.RabbitEventCatalog;
 import com.vitalitsoft.domain.events.model.PasswordResetEventModel;
 import com.vitalitsoft.domain.events.model.SendOtpEventModel;
 import com.vitalitsoft.domain.hashing.HashingRepository;
@@ -28,8 +29,8 @@ public class UseCasesConfig {
     }
 
     @Bean
-    public RegisterUserUseCase registerUserUseCase(AuthRepository authRepository, HashingRepository hashingRepository, EventsRepository<UserRegisterEventModel> eventsRepository, UserTokenRepository userTokenRepository) {
-        return new RegisterUserUseCase(authRepository, hashingRepository, eventsRepository, userTokenRepository);
+    public RegisterUserUseCase registerUserUseCase(AuthRepository authRepository, HashingRepository hashingRepository, EventsRepository<UserRegisterEventModel> eventsRepository, UserTokenRepository userTokenRepository, RabbitEventCatalog rabbitEventCatalog) {
+        return new RegisterUserUseCase(authRepository, hashingRepository, eventsRepository, userTokenRepository, rabbitEventCatalog);
     }
 
     @Bean
@@ -48,8 +49,8 @@ public class UseCasesConfig {
     }
 
     @Bean
-    public RequestResetPasswordUseCase requestResetPasswordUseCase(AuthRepository authRepository, UserTokenRepository userTokenRepository, EventsRepository<PasswordResetEventModel> eventsRepository) {
-        return new RequestResetPasswordUseCase(authRepository, userTokenRepository, eventsRepository);
+    public RequestResetPasswordUseCase requestResetPasswordUseCase(AuthRepository authRepository, UserTokenRepository userTokenRepository, EventsRepository<PasswordResetEventModel> eventsRepository, RabbitEventCatalog rabbitEventCatalog) {
+        return new RequestResetPasswordUseCase(authRepository, userTokenRepository, eventsRepository, rabbitEventCatalog);
     }
 
     @Bean

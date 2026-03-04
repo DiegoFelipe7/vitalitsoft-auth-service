@@ -6,7 +6,7 @@ import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.PasswordResetEventModel;
 import com.vitalitsoft.domain.shared.enums.UserEventType;
-import com.vitalitsoft.domain.shared.events.RabbitEventCatalog;
+import com.vitalitsoft.domain.events.gateways.RabbitEventCatalog;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +22,7 @@ public class RequestResetPasswordUseCase implements Function<RequestResetPasswor
     private final AuthRepository authRepository;
     private final UserTokenRepository userTokenRepository;
     private final EventsRepository<PasswordResetEventModel> eventsRepository;
+    private final RabbitEventCatalog rabbitEventCatalog;
 
     @Override
     public Mono<Void> apply(RequestResetPassword request) {
@@ -40,7 +41,7 @@ public class RequestResetPasswordUseCase implements Function<RequestResetPasswor
 
     private Mono<Void> publishEvent(String email, String token) {
         log.debug("Publicando evento de restablecimiento de contraseña para: {}", email);
-        var routing = RabbitEventCatalog.resolve(UserEventType.USER_PASSWORD_RESET);
+        var routing = rabbitEventCatalog.resolve(UserEventType.USER_PASSWORD_RESET);
         return eventsRepository.publish(routing.exchange(), routing.routingKey(), PasswordResetEventModel.builder()
                         .email(email)
                         .token(token)
