@@ -36,7 +36,7 @@ public class AuthRouterRest {
                     operation = @Operation(
                             operationId = "login",
                             summary = "Iniciar sesión",
-                            description = "Autentica a un usuario y retorna el token de acceso.",
+                            description = "Autentica a un usuario y retorna el token de acceso. El refresh token también se retorna como cookie HttpOnly.",
                             tags = {"Auth"},
                             requestBody = @RequestBody(
                                     description = "Credenciales de usuario",
@@ -47,7 +47,8 @@ public class AuthRouterRest {
                                     )
                             ),
                             responses = {
-                                    @ApiResponse(responseCode = "200", description = "Login exitoso",
+                                    @ApiResponse(responseCode = "200", description = "Login exitoso. El refresh token también se retorna como cookie HttpOnly llamada 'refreshToken'",
+                                            headers = {@io.swagger.v3.oas.annotations.headers.Header(name = "Set-Cookie", description = "Refresh token como cookie HttpOnly, ejemplo: refreshToken=...; HttpOnly; Secure; Path=/; SameSite=Strict")},
                                             content = @Content(
                                                     mediaType = "application/json",
                                                     schema = @Schema(implementation = LoginResponse.class)
@@ -249,6 +250,50 @@ public class AuthRouterRest {
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
                             }
                     )
+            ),
+            @RouterOperation(
+                    path = "/auth/refresh-token",
+                    produces = {"application/json"},
+                    method = RequestMethod.POST,
+                    beanClass = AuthHandler.class,
+                    beanMethod = "refreshToken",
+                    operation = @Operation(
+                            operationId = "refreshToken",
+                            summary = "Refrescar token de acceso",
+                            description = "Genera un nuevo token de acceso usando el refresh token enviado como cookie HttpOnly (refreshToken).",
+                            tags = {"Auth"},
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "Nuevo token de acceso generado",
+                                            content = @Content(
+                                                    mediaType = "application/json",
+                                                    schema = @Schema(implementation = LoginResponse.class)
+                                            )
+                                    ),
+                                    @ApiResponse(responseCode = "401", description = "Refresh token inválido o expirado"),
+                                    @ApiResponse(responseCode = "400", description = "Refresh token no enviado en la cookie"),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/auth/logout",
+                    produces = {"application/json"},
+                    method = RequestMethod.POST,
+                    beanClass = AuthHandler.class,
+                    beanMethod = "logout",
+                    operation = @Operation(
+                            operationId = "logout",
+                            summary = "Cerrar sesión",
+                            description = "Elimina la cookie HttpOnly de refresh token y cierra la sesión del usuario.",
+                            tags = {"Auth"},
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "Logout exitoso. La cookie refreshToken es eliminada.",
+                                            headers = {@io.swagger.v3.oas.annotations.headers.Header(name = "Set-Cookie", description = "Cookie refreshToken eliminada, ejemplo: refreshToken=; HttpOnly; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")},
+                                            content = @Content(schema = @Schema(type = "string", example = "Logout exitoso"))),
+                                    @ApiResponse(responseCode = "401", description = "No autorizado"),
+                                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                            }
+                    )
             )
     })
 
@@ -258,6 +303,8 @@ public class AuthRouterRest {
                 .POST("/auth/login", handler::login)
                 .POST("/auth/register", handler::register)
                 .POST("/auth/activate", handler::activateAccount)
+                .POST("/auth/logout", handler::logout)
+                .POST("/auth/refresh-token", handler::refreshToken)
                 .POST("/auth/request-reset-password", handler::requestResetPassword)
                 .POST("/auth/validate-reset-token", handler::validatePasswordResetToken)
                 .POST("/auth/confirm-reset-password", handler::confirmPasswordReset)

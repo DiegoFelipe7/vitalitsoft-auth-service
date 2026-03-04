@@ -25,6 +25,7 @@ public class NexusException extends CustomException {
         OTP_MAX_ATTEMPTS,
         PASSWORD_MISMATCH,
         ACCOUNT_LOCKED,
+        UNAUTHORIZED,
         UNAUTHORIZED_ACCESS,
         TOKEN_ALREADY_USED,
         PENDING_VERIFICATION,

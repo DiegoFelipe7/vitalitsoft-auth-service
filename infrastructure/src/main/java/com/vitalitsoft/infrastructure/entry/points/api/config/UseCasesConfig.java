@@ -1,8 +1,6 @@
 package com.vitalitsoft.infrastructure.entry.points.api.config;
 
-import com.vitalitsoft.application.usecase.auth.ActivateAccountUseCase;
-import com.vitalitsoft.application.usecase.auth.LoginUseCase;
-import com.vitalitsoft.application.usecase.auth.RegisterUserUseCase;
+import com.vitalitsoft.application.usecase.auth.*;
 import com.vitalitsoft.application.usecase.passwordReset.ConfirmPasswordResetUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.RequestResetPasswordUseCase;
 import com.vitalitsoft.application.usecase.passwordReset.ValidatePasswordResetTokenUseCase;
@@ -37,6 +35,16 @@ public class UseCasesConfig {
     @Bean
     public ActivateAccountUseCase activateAccountUseCase(AuthRepository authRepository, UserTokenRepository userTokenRepository) {
         return new ActivateAccountUseCase(authRepository, userTokenRepository);
+    }
+
+    @Bean
+    public LogoutUseCase logoutUseCase(RefreshTokenRepository refreshTokenRepository, JwtRepository jwtRepository) {
+        return new LogoutUseCase(refreshTokenRepository, jwtRepository);
+    }
+
+    @Bean
+    public RefreshSessionTokenUseCase refreshSessionTokenUseCase(RefreshTokenRepository refreshTokenRepository, JwtRepository jwtRepository, AuthRepository authRepository) {
+        return new RefreshSessionTokenUseCase(refreshTokenRepository, jwtRepository, authRepository);
     }
 
     @Bean
