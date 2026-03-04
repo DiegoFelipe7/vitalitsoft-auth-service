@@ -20,8 +20,8 @@ public class ValidatePasswordResetTokenUseCase implements Function<ValidateToken
         log.info("Validando token de tipo: {}", request.getTokenType());
 
         return this.userTokenRepository.findByTokenAndType(request.getToken(), request.getTokenType())
-                .map(UserTokenModel::isValid)
-                .defaultIfEmpty(false)
+                .doOnNext(UserTokenModel::verifyValidity)
+                .map(ele->!ele.getUsed())
                 .map(ele -> ValidatePasswordResetTokenResponse.builder().isValid(ele).build())
                 .doOnSuccess(response -> log.info("Validación de token de tipo: {} resultó en: {}", request.getTokenType(), response.getIsValid()))
                 .doOnError(error -> log.error("Error al validar token de tipo: {}", request.getTokenType(), error));

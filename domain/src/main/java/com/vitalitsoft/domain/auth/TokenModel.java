@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TokenModel{
-    private String token;
+    private String accessToken;
     private String refreshToken;
     private Boolean isTwoFactorAuthRequired;
+    private String sessionId;
 }

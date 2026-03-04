@@ -20,8 +20,8 @@ public class HashingAdapter implements HashingRepository {
     }
 
     @Override
-    public Mono<Boolean> matches(String rawOtp, String hashedOtp) {
-        return Mono.fromCallable(() -> passwordEncoder.matches(rawOtp, hashedOtp))
+    public Mono<Boolean> matches(String rawValue, String hashedValue) {
+        return Mono.fromCallable(() -> passwordEncoder.matches(rawValue, hashedValue))
                 .subscribeOn(Schedulers.boundedElastic());
     }
 }

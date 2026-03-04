@@ -61,9 +61,10 @@ public class ResendOtpUseCase implements Function<ResendOtpRequest, Mono<Void>> 
         return encryptionRepository.hash(rawOtp)
                 .map(hashedOtp -> otp
                         .withCode(hashedOtp)
+                        .withAttempts(0)
                         .incrementResendAttempts()
                         .withUpdatedAt(LocalDateTime.now()))
-                .flatMap(otpRepository::save)
+                .flatMap(otpRepository::update)
                 .flatMap(savedOtp -> publishOtpEvent(savedOtp, rawOtp));
     }
 

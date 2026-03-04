@@ -30,15 +30,23 @@ public final class AuthMapper {
     }
 
 
-
+    public static TokenModel toTokenModel(String sessionId) {
+        return TokenModel.builder()
+                .isTwoFactorAuthRequired(true)
+                .sessionId(sessionId)
+                .build();
+    }
 
     public static LoginResponse toLoginResponse(TokenModel tokenModel) {
         return LoginResponse.builder()
-                .token(tokenModel.getToken())
+                .accessToken(tokenModel.getAccessToken())
                 .refreshToken(tokenModel.getRefreshToken())
                 .isTwoFactorAuthRequired(tokenModel.getIsTwoFactorAuthRequired())
+                .sessionId(tokenModel.getSessionId())
                 .build();
     }
+
+
 
 
 

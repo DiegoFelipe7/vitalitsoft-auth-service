@@ -51,7 +51,7 @@ public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>>
 
     private Mono<AuthModel> validatePassword(AuthModel user, String rawPassword) {
 
-        return hashingRepository.matches(rawPassword, user.getPassword())
+        return  hashingRepository.matches(rawPassword, user.getPassword())
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.INVALID_PASSWORD, HttpStatus.UNAUTHORIZED)))
                 .thenReturn(user);
@@ -71,20 +71,17 @@ public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>>
         return hashingRepository.hash(rawOtp)
                 .map(hash -> OtpMapper.toModel(user.getId(), hash))
                 .flatMap(otpRepository::save)
-                .then(publishOtpEvent(user, rawOtp))
-                .thenReturn(TokenModel.builder().isTwoFactorAuthRequired(true).build())
+                .flatMap(otp -> publishOtpEvent(user.getEmail(), otp.getSessionId(), rawOtp).thenReturn(otp))
+                .map(savedOtp -> AuthMapper.toTokenModel(savedOtp.getSessionId()))
                 .doOnSuccess(t -> log.info("2FA initiated for {}", user.getEmail()));
     }
 
-    private Mono<Void> publishOtpEvent(AuthModel user, String rawOtp) {
+    private Mono<Void> publishOtpEvent(String email, String sessionId, String rawOtp) {
 
         return eventPublisher.publish(
                 "auth.exchange",
                 "auth.otp.send",
-                SendOtpEventModel.builder()
-                        .email(user.getEmail())
-                        .otp(rawOtp)
-                        .build()
+                OtpMapper.toSendOtpEventModel(email, sessionId, rawOtp)
         );
     }
 

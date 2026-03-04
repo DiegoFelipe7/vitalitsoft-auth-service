@@ -51,4 +51,14 @@ public class AuthMapper {
                 .build();
     }
 
+    public static AuthEntity toEntity(AuthModel authModel) {
+        return AuthEntity.builder()
+                .id(authModel.getId())
+                .email(authModel.getEmail())
+                .role(authModel.getRole())
+                .status(authModel.getStatus())
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
 }

@@ -2,7 +2,6 @@ package com.vitalitsoft.infrastructure.driven.adapters.security.jwt.adapter;
 
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
-import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.infrastructure.driven.adapters.security.jwt.provider.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,7 +19,6 @@ import java.util.List;
 public class JwtAdapter implements JwtRepository {
 
     private final JwtProvider jwtProvider;
-    private final HashingRepository hashingRepository;
 
     @Override
     public Mono<TokenModel> generateToken(String email,
@@ -34,12 +32,11 @@ public class JwtAdapter implements JwtRepository {
         String accessToken = jwtProvider.generateAccessToken(userDetails, email);
         String rawRefreshToken = jwtProvider.generateRefreshToken(userDetails, email);
 
-        return hashingRepository.hash(rawRefreshToken)
-                .flatMap(hashedRefreshToken -> Mono.just(TokenModel.builder()
-                        .token(accessToken)
-                        .refreshToken(rawRefreshToken)
-                        .isTwoFactorAuthRequired(isTwoFactorAuthRequired)
-                        .build()));
+        return Mono.just(TokenModel.builder()
+                .accessToken(accessToken)
+                .refreshToken(rawRefreshToken)
+                .isTwoFactorAuthRequired(isTwoFactorAuthRequired)
+                .build());
     }
 
     @Override
