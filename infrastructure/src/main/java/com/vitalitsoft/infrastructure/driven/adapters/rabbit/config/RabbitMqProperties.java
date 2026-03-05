@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,11 +23,12 @@ public class RabbitMqProperties {
     private Set<String> exchanges;
     private Set<String> queues;
     private Set<String> routingKeys;
-    private Map<String, QueueBinding> bindings;
+    private List<QueueBinding> bindings;
 
     @Getter
     @Setter
     public static class QueueBinding {
+        private String key;
         private String exchange;
         private String routingKey;
         private String queue;

@@ -28,7 +28,7 @@ public class RabbitMqExchangeInitializer {
     public void initializeRabbitMq() {
         declareExchanges()
                 .then(declareQueues())
-                //.then(createBindings())
+                .then(createBindings())
                 .doOnSuccess(unused -> log.info("RabbitMQ infrastructure initialized successfully"))
                 .doOnError(error -> log.error("Error initializing RabbitMQ infrastructure: {}", error.getMessage()))
                 .subscribe();
@@ -83,11 +83,13 @@ public class RabbitMqExchangeInitializer {
             log.warn("No bindings configured for initialization");
             return Mono.empty();
         }
-       /* return Flux.fromIterable(Arrays.asList(properties.getBindings().entrySet().toArray()))
+
+
+        return Flux.fromIterable((properties.getBindings()))
                 .flatMap(this::createBinding)
                 .then()
-                .doOnSuccess(unused -> log.info("All bindings created successfully"));*/
-        return Mono.empty().then();
+                .doOnSuccess(unused -> log.info("All bindings created successfully"));
+
     }
 
     private Mono<AMQP.Queue.BindOk> createBinding(RabbitMqProperties.QueueBinding binding) {
