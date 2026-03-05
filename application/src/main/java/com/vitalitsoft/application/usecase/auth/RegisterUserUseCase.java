@@ -10,8 +10,7 @@ import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
 import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.enums.UserEventType;
-import com.vitalitsoft.domain.events.gateways.RabbitEventCatalog;
+import com.vitalitsoft.domain.shared.constants.RabbitEvent;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
@@ -28,9 +27,8 @@ import java.util.function.Function;
 public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<Void>> {
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
-    private final EventsRepository<UserRegisterEventModel> eventsRepository;
+    private final EventsRepository<UserRegisterEventModel> eventPublisher;
     private final UserTokenRepository userTokenRepository;
-    private final RabbitEventCatalog rabbitEventCatalog;
 
     @Override
     public Mono<Void> apply(RegisterUserRequest request) {
@@ -97,8 +95,7 @@ public class RegisterUserUseCase implements Function<RegisterUserRequest, Mono<V
                 .phoneNumber(request.getPhoneNumber())
                 .build();
 
-        var routing = rabbitEventCatalog.resolve(UserEventType.USER_CREATED);
-        return eventsRepository.publish(routing.exchange(), routing.routingKey(), eventModel)
+        return eventPublisher.publish(RabbitEvent.USER_CREATED, eventModel)
                 .doOnSuccess(unused -> log.info("Evento USER_CREATED publicado para {}", eventModel.getEmail()))
                 .doOnError(error -> log.error("Error al publicar evento USER_CREATED para {}: {}", eventModel.getEmail(), error.getMessage()));
     }
