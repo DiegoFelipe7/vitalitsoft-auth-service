@@ -4,8 +4,6 @@ import com.vitalitsoft.domain.otp.OtpModel;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.exception.NexusException;
-import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.auth.AuthEntity;
-import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.auth.mapper.AuthMapper;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.otp.mapper.OtpMapper;
 import org.reactivecommons.utils.ObjectMapper;
