@@ -1,0 +1,28 @@
+services:
+  #db:
+   # image: postgres:15
+   # container_name: postgres_db_auth
+   # environment:
+    #  POSTGRES_DB: ${R2DBC_DATABASE}
+    #  POSTGRES_USER: ${R2DBC_USERNAME}
+    #  POSTGRES_PASSWORD: ${R2DBC_PASSWORD}
+   # ports:
+   #   - ${R2DBC_PORT}
+   # env_file:
+    #  - .env
+  #  volumes:
+    #  - db_data:/var/lib/postgresql/data
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vitalitsoft-auth-service
+    #depends_on:
+    #  - db
+    ports:
+      - ${SERVER_PORT}
+    env_file:
+      - .env
+    restart: unless-stopped
+#volumes:
+  #db_data:

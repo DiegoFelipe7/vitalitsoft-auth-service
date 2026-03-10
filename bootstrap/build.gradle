@@ -19,3 +19,7 @@ repositories {
 springBoot {
     mainClass = 'com.vitalitsoft.MainApplication'
 }
+
+jar {
+    enabled = false
+}

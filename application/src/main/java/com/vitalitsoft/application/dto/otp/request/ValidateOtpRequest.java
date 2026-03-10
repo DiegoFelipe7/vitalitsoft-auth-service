@@ -12,5 +12,6 @@ public class ValidateOtpRequest {
     private String sessionId;
     @NotBlank(message = "La otp es obligatoria.")
     private String otp;
-    private boolean inactiveTwoFactor = false;
+    @NotBlank(message = "Inactive two factor es obligatoria.")
+    private boolean inactiveTwoFactor;
 }

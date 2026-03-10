@@ -30,7 +30,7 @@ Thumbs.db
 
 # Docker files
 Dockerfile*
-docker-compose*
+docker-compose.yml
 
 # Gradle cache
 .gradle/

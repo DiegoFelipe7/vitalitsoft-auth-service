@@ -39,4 +39,4 @@ out/
 .env
 .env.dev
 .DS_Store
-docker-compose.yaml
+docker-compose.yml
