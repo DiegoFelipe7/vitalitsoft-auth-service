@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -18,9 +19,9 @@ import java.util.logging.Logger;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtProvider {
 
-    private static final Logger LOGGER = Logger.getLogger(JwtProvider.class.getName());
     private final SecurityProperties securityProperties;
 
 
@@ -89,15 +90,15 @@ public class JwtProvider {
                     .getSubject();
             return true;
         } catch (ExpiredJwtException e) {
-            LOGGER.severe("token expired");
+            log.error("token expired");
         } catch (UnsupportedJwtException e) {
-            LOGGER.severe("token unsupported");
+            log.error("token unsupported");
         } catch (MalformedJwtException e) {
-            LOGGER.severe("token malformed");
+            log.error("token malformed");
         } catch (SignatureException e) {
-            LOGGER.severe("bad signature");
+            log.error("bad signature");
         } catch (IllegalArgumentException e) {
-            LOGGER.severe("illegal args");
+            log.error("illegal args");
         }
         return false;
     }
