@@ -1,7 +1,7 @@
 # Build artifacts
 **/build/
-**/target/
 *.jar
+!bootstrap/build/libs/bootstrap.jar
 *.war
 *.ear
 

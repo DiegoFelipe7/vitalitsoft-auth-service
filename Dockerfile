@@ -1,15 +1,23 @@
-FROM openjdk:17-jdk-alpine
-
-# Set the working directory inside the container
+# -------- Stage 1: Build --------
+FROM gradle:8.7-jdk17 AS builder
 WORKDIR /app
 
-# Copy the application's JAR file into the container
-# Make sure to build your JAR file first using 'mvn clean package' or 'gradle build'
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} app.jar
+# Copiar archivos de Gradle
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+COPY gradlew ./
 
-# Expose the port on which the Spring Boot application runs (default is 8080)
-EXPOSE 8080
+# Copiar solo bootstrap, ya que tiene las dependencias a los otros módulos
+COPY bootstrap ./bootstrap
+# Generar el jar
+RUN ./gradlew :bootstrap:bootJar --no-daemon
+# Copia tu JAR generado por Gradle
+COPY bootstrap/build/libs/bootstrap.jar auth-service.jar
+
+# Expone el puerto (puede configurarse vía ENV)
+EXPOSE 8081
 
 # Define the command to run the application when the container starts
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+
+# Comando para ejecutar la app
+ENTRYPOINT ["java", "-jar", "/app/auth-service.jar"]

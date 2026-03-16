@@ -45,7 +45,10 @@ adapters:
     password: ${RABBIT_PASSWORD}
     virtual-host: ${RABBIT_VIRTUAL_HOST}
     connection-timeout: ${RABBIT_CONNECTION_TIMEOUT}
-
+    exchanges: ${RABBIT_EXCHANGES}
+    routing-keys: ${RABBIT_ROUTING_KEYS}
+    queues: ${RABBIT_QUEUES}
+    bindings: [ ]
 
 
 
