@@ -1,7 +1,6 @@
 package com.vitalitsoft.infrastructure.entry.points.api.config;
 
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class ObjectValidator {
                 String message = violations.stream()
                         .map(ConstraintViolation::getMessage)
                         .collect(Collectors.joining(", "));
-                throw new NexusException(message, HttpStatus.BAD_REQUEST);
+                throw new VitalitSoftException(message);
             }
 
             return object;

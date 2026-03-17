@@ -1,11 +1,18 @@
 package com.vitalitsoft.domain.shared.exception;
 
+import lombok.Getter;
+
 import java.io.Serial;
 
-public class NexusException extends CustomException {
+@Getter
+public class VitalitSoftException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
+    private final Type type;
+
+
     public enum Type {
+        COOKIE_NOT_FOUND,
         USER_NOT_FOUND,
         INVALID_PASSWORD,
         REFRESH_INVALID_TOKEN,
@@ -21,7 +28,6 @@ public class NexusException extends CustomException {
         OTP_ALREADY_USED,
         OTP_EXPIRED,
         OTP_INVALID,
-
         OTP_BLOCKED,
         OTP_MAX_ATTEMPTS,
         PASSWORD_MISMATCH,
@@ -36,19 +42,14 @@ public class NexusException extends CustomException {
         INTERNAL_ERROR
     }
 
-    public NexusException(String message, int httpStatus) {
-        super(message, httpStatus);
+    public VitalitSoftException(Type type) {
+        super(type.name());
+        this.type = type;
+    }
+    
+    public VitalitSoftException(String message) {
+        super(message);
+        this.type = Type.INTERNAL_ERROR;
     }
 
-    public NexusException(String message, String code) {
-        super(message, code);
-    }
-
-    public NexusException(Type message, int httpStatus) {
-        super(message.name(), httpStatus);
-    }
-
-    public NexusException(String message, String code, int httpStatus) {
-        super(message, code, httpStatus);
-    }
 }

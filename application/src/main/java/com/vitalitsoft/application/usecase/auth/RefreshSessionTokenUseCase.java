@@ -7,9 +7,8 @@ import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.auth.gateways.JwtRepository;
 import com.vitalitsoft.domain.refreshtoken.RefreshTokenModel;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.Status;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -39,7 +38,7 @@ public class RefreshSessionTokenUseCase implements Function<String, Mono<TokenMo
     private Mono<AuthModel> loadActiveUser(RefreshTokenModel token) {
         return authRepository.findByEmail(token.getEmail())
                 .filter(user -> user.getStatus() == Status.ACTIVE)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.ACCOUNT_LOCKED, HttpStatus.FORBIDDEN)));
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.ACCOUNT_LOCKED)));
     }
 
 

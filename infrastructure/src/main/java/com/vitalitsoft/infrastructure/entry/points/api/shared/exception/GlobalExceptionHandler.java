@@ -2,7 +2,7 @@ package com.vitalitsoft.infrastructure.entry.points.api.shared.exception;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.infrastructure.entry.points.api.shared.utilities.ExceptionUtils;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.NonNull;
@@ -57,7 +57,7 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
     }
 
     private ErrorResponse buildErrorResponse(Throwable ex) {
-        if (ex instanceof NexusException customException) {
+        if (ex instanceof VitalitSoftException customException) {
             return handleCustomException(customException);
         } else if (ex instanceof WebExchangeBindException validationException) {
             return handleValidationException(validationException);
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
             return handleR2dbcBadGrammarException(badGrammarException);
         } else if (ex instanceof Exception exception) {
             return handleIllegalArgumentException(exception);
-        }  else {
+        } else {
             return handleGenericException(ex);
         }
     }
@@ -82,8 +82,8 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         return ErrorResponse.of(details, HttpStatus.BAD_REQUEST, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
     }
 
-    private ErrorResponse handleCustomException(NexusException ex) {
-        HttpStatus status = HttpStatus.valueOf(ex.getHttpStatus());
+    private ErrorResponse handleCustomException(VitalitSoftException ex) {
+        HttpStatus status = mapToHttpStatus(ex.getType());
         return ErrorResponse.of(ex.getMessage(), status, LocalDateTime.now(), ExceptionUtils.origin(ex) + ": " + ExceptionUtils.rootCause(ex));
     }
 
@@ -111,4 +111,43 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         return ErrorResponse.of(details, HttpStatus.BAD_REQUEST, LocalDateTime.now(), Arrays.toString(ex.getStackTrace()));
     }
 
+
+    private HttpStatus mapToHttpStatus(VitalitSoftException.Type type) {
+        return switch (type) {
+
+            case UNAUTHORIZED,
+                 UNAUTHORIZED_ACCESS,
+                 INVALID_AUTH,
+                 MISSING_AUTH,
+                 API_KEY_REQUIRED,
+                 INVALID_TOKEN,
+                 TOKEN_EXPIRED,
+                 TOKEN_EXPIRED_OR_INVALID,
+                 TOKEN_NOT_FOUND,
+                 REFRESH_INVALID_TOKEN,
+                 REFRESH_TOKEN_EXPIRED,
+                 TOKEN_ALREADY_USED,
+                 COOKIE_NOT_FOUND -> HttpStatus.UNAUTHORIZED;
+
+            case ACCOUNT_LOCKED,
+                 OTP_BLOCKED -> HttpStatus.FORBIDDEN;
+
+            case USER_NOT_FOUND,
+                 SESSION_ID_NOT_FOUND -> HttpStatus.NOT_FOUND;
+
+            case EMAIL_ALREADY_EXISTS,
+                 EMAIL_ALREADY_REGISTERED -> HttpStatus.CONFLICT;
+
+            case INVALID_PASSWORD,
+                 PASSWORD_MISMATCH,
+                 OTP_INVALID,
+                 OTP_EXPIRED,
+                 OTP_ALREADY_USED,
+                 OTP_MAX_ATTEMPTS,
+                 OTP_MAX_RESEND_ATTEMPTS,
+                 PENDING_VERIFICATION -> HttpStatus.BAD_REQUEST;
+
+            default -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+    }
 }

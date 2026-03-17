@@ -1,8 +1,7 @@
 package com.vitalitsoft.infrastructure.driven.adapters.security.jwt.filter;
 
 
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import lombok.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -24,7 +23,7 @@ public class JwtFilter implements WebFilter {
             return chain.filter(exchange);
         String auth = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (!auth.startsWith("Bearer ")){
-            return Mono.error(new NexusException(NexusException.Type.INVALID_AUTH, HttpStatus.UNAUTHORIZED));
+            return Mono.error(new VitalitSoftException(VitalitSoftException.Type.INVALID_AUTH));
         }
         String token = auth.replace("Bearer ", "");
         exchange.getAttributes().put("token", token);

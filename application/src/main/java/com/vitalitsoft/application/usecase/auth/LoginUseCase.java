@@ -13,9 +13,8 @@ import com.vitalitsoft.domain.events.model.SendOtpEventModel;
 import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.constants.RabbitEvent;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.domain.shared.utils.OtpGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +51,7 @@ public class LoginUseCase implements Function<LoginCommand, Mono<TokenModel>> {
 
         return hashingRepository.matches(rawPassword, user.getPassword())
                 .filter(Boolean::booleanValue)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.INVALID_PASSWORD, HttpStatus.UNAUTHORIZED)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.INVALID_PASSWORD)))
                 .thenReturn(user);
     }
 
@@ -68,7 +67,7 @@ public class LoginUseCase implements Function<LoginCommand, Mono<TokenModel>> {
         String rawOtp = OtpGenerator.generateNumericOtp();
 
         return hashingRepository.hash(rawOtp)
-                .map(hash -> OtpMapper.toModel(user.getId(), hash))
+                .map(hash -> OtpMapper.toOtpModel(user.getId(), hash))
                 .flatMap(otpRepository::save)
                 .flatMap(otp -> publishOtpEvent(user.getEmail(), otp.getSessionId(), rawOtp).thenReturn(otp))
                 .map(savedOtp -> AuthMapper.toTokenModel(savedOtp.getSessionId()))

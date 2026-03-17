@@ -3,9 +3,8 @@ package com.vitalitsoft.infrastructure.driven.adapters.r2dbc.auth;
 
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.Status;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.auth.mapper.AuthMapper;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
@@ -41,7 +40,7 @@ public class AuthReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     public Mono<AuthModel> findByEmail(String email) {
         return repository
                 .findByEmail(email)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.USER_NOT_FOUND, HttpStatus.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.USER_NOT_FOUND)))
                 .map(AuthMapper::mapToModel);
 
     }
@@ -67,7 +66,7 @@ public class AuthReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 .matching(Query.query(Criteria.where("id").is(id)))
                 .apply(Update.update("status", status).set("updated_at", LocalDateTime.now()))
                 .filter(rows -> rows > 0)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.USER_NOT_FOUND, HttpStatus.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.USER_NOT_FOUND)))
                 .then(
                         template.selectOne(
                                 Query.query(Criteria.where("id").is(id)),
@@ -90,7 +89,7 @@ public class AuthReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     public Mono<AuthModel> findById(UUID id) {
         return repository
                 .findById(id)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.USER_NOT_FOUND, HttpStatus.BAD_REQUEST)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.USER_NOT_FOUND)))
                 .map(AuthMapper::mapToModel);
     }
 

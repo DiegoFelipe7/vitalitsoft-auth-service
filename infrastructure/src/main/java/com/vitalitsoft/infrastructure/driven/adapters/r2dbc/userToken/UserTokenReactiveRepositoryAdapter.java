@@ -1,9 +1,8 @@
 package com.vitalitsoft.infrastructure.driven.adapters.r2dbc.userToken;
 
 
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.TokenType;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
@@ -49,7 +48,7 @@ public class UserTokenReactiveRepositoryAdapter extends ReactiveAdapterOperation
     public Mono<UserTokenModel> findByTokenAndType(String token, TokenType tokenType) {
         return this.repository.findByTokenAndTokenType(token, tokenType)
                 .filter(ele -> !Boolean.TRUE.equals(ele.getUsed()))
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.TOKEN_EXPIRED_OR_INVALID, HttpStatus.UNAUTHORIZED)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.TOKEN_EXPIRED_OR_INVALID)))
                 .map(UserTokenMapper::mapToModel);
     }
 

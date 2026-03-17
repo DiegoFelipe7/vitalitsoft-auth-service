@@ -1,8 +1,7 @@
 package com.vitalitsoft.infrastructure.driven.adapters.security.jwt.manager;
 
 
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.infrastructure.driven.adapters.security.jwt.provider.JwtProvider;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
     public Mono<Authentication> authenticate(@Nonnull Authentication authentication) {
         return Mono.just(authentication)
                 .map(auth -> jwtProvider.getClaims(Objects.requireNonNull(auth.getCredentials()).toString()))
-                .onErrorResume(e -> Mono.error(new NexusException("BAD TOKEN", HttpStatus.BAD_REQUEST)))
+                .onErrorResume(e -> Mono.error(new VitalitSoftException("BAD TOKEN")))
                 .map(claims -> {
                     Object rolesObj = claims.get("roles");
                     List<SimpleGrantedAuthority> authorities = Collections.emptyList();

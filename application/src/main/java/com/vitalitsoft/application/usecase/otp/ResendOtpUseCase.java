@@ -1,16 +1,14 @@
 package com.vitalitsoft.application.usecase.otp;
 
 import com.vitalitsoft.application.command.otp.ResendOtpCommand;
-import com.vitalitsoft.application.mapper.otp.OtpMapper;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.SendOtpEventModel;
 import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.otp.OtpModel;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.constants.RabbitEvent;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.domain.shared.utils.OtpGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,11 +43,11 @@ public class ResendOtpUseCase implements Function<ResendOtpCommand, Mono<Void>> 
         
         if (otp.isUsed()) {
             log.warn("Intento de reenvío de OTP ya usado para sessionId: {}", otp.getSessionId());
-            return Mono.error(new NexusException(NexusException.Type.OTP_ALREADY_USED, HttpStatus.BAD_REQUEST));
+            return Mono.error(new VitalitSoftException(VitalitSoftException.Type.OTP_ALREADY_USED));
         }
         if (otp.hasExceededResendAttempts(MAX_RESEND)) {
             log.warn("Máximo de reenvíos excedido para sessionId: {}", otp.getSessionId());
-            return Mono.error(new NexusException(NexusException.Type.OTP_MAX_RESEND_ATTEMPTS, HttpStatus.BAD_REQUEST));
+            return Mono.error(new VitalitSoftException(VitalitSoftException.Type.OTP_MAX_RESEND_ATTEMPTS));
         }
         return Mono.just(otp);
     }

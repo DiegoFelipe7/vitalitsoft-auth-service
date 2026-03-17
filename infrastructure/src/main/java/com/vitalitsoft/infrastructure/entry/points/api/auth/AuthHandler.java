@@ -17,6 +17,9 @@ import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.passwordReset.re
 import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.passwordReset.request.ValidateTokenResetRequest;
 import com.vitalitsoft.infrastructure.entry.points.api.config.ObjectValidator;
 import com.vitalitsoft.infrastructure.entry.points.api.manager.CookieManager;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.mapper.AuthApiMapper;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.mapper.OtpApiMapper;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.mapper.PasswordResetApiMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -46,21 +49,22 @@ public class AuthHandler {
     public Mono<ServerResponse> login(ServerRequest request) {
         return request.bodyToMono(LoginRequest.class)
                 .flatMap(objectValidator::validate)
-                .map(AuthMapper::toCommand)
+                .map(AuthApiMapper::toCommand)
                 .flatMap(loginUseCase)
-                .flatMap(tokenModel -> {
-                    ResponseCookie cookie = CookieManager.createCookie(Constants.REFRESH_TOKEN_COOKIE_NAME, responseDto.getRefreshToken());
+                .map(AuthApiMapper::toResponseDto)
+                .flatMap(token -> {
+                    ResponseCookie cookie = CookieManager.createSecureCookie(Constants.REFRESH_TOKEN_COOKIE_NAME, token.getRefreshToken());
                     return ServerResponse.ok()
                             .cookie(cookie)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(AuthMapper.toResponseDto(tokenModel));
+                            .bodyValue(token);
                 });
     }
 
     public Mono<ServerResponse> register(ServerRequest request) {
         return request.bodyToMono(RegisterUserRequest.class)
                 .flatMap(objectValidator::validate)
-                .map(AuthMapper::toCommand)
+                .map(AuthApiMapper::toCommand)
                 .flatMap(command -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(registerUserUseCase.apply(command), Void.class)
@@ -70,7 +74,7 @@ public class AuthHandler {
     public Mono<ServerResponse> activateAccount(ServerRequest request) {
         return request.bodyToMono(ActivateAccountRequest.class)
                 .flatMap(objectValidator::validate)
-                .map(AuthMapper::toCommand)
+                .map(AuthApiMapper::toCommand)
                 .flatMap(command -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(activateAccountUseCase.apply(command), Void.class)
@@ -81,12 +85,11 @@ public class AuthHandler {
         return CookieManager.getCookieValue(request, Constants.REFRESH_TOKEN_COOKIE_NAME)
                 .flatMap(refreshSessionTokenUseCase)
                 .flatMap(tokenModel -> {
-                    var responseDto = AuthMapper.toResponseDto(tokenModel);
-                    ResponseCookie cookie = CookieManager.refreshCookie(Constants.REFRESH_TOKEN_COOKIE_NAME, responseDto.getRefreshToken());
+                    ResponseCookie cookie = CookieManager.createSecureCookie(Constants.REFRESH_TOKEN_COOKIE_NAME, tokenModel.getRefreshToken());
                     return ServerResponse.ok()
                             .cookie(cookie)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(responseDto);
+                            .bodyValue(AuthApiMapper.toResponseDto(tokenModel));
                 });
     }
 
@@ -102,7 +105,7 @@ public class AuthHandler {
     public Mono<ServerResponse> requestResetPassword(ServerRequest request) {
         return request.bodyToMono(RequestResetPassword.class)
                 .flatMap(objectValidator::validate)
-                .map(passwordResetApiMapper::toCommand)
+                .map(PasswordResetApiMapper::toCommand)
                 .flatMap(command -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(requestResetPasswordUseCase.apply(command), Void.class)
@@ -112,9 +115,9 @@ public class AuthHandler {
     public Mono<ServerResponse> validatePasswordResetToken(ServerRequest request) {
         return request.bodyToMono(ValidateTokenResetRequest.class)
                 .flatMap(objectValidator::validate)
-                .map(passwordResetApiMapper::toCommand)
+                .map(PasswordResetApiMapper::toCommand)
                 .flatMap(validatePasswordResetTokenUseCase)
-                .map(passwordResetApiMapper::toResponseDto)
+                .map(PasswordResetApiMapper::toResponseDto)
                 .flatMap(responseDto -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(responseDto)
@@ -124,7 +127,7 @@ public class AuthHandler {
     public Mono<ServerResponse> confirmPasswordReset(ServerRequest request) {
         return request.bodyToMono(ConfirmPasswordResetRequest.class)
                 .flatMap(objectValidator::validate)
-                .map(passwordResetApiMapper::toCommand)
+                .map(PasswordResetApiMapper::toCommand)
                 .flatMap(command -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(confirmPasswordResetUseCase.apply(command), Void.class)
@@ -134,7 +137,7 @@ public class AuthHandler {
     public Mono<ServerResponse> resendOtp(ServerRequest request) {
         return request.bodyToMono(ResendOtpRequest.class)
                 .flatMap(objectValidator::validate)
-                .map(otpApiMapper::toCommand)
+                .map(OtpApiMapper::toCommand)
                 .flatMap(command -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(resendOtpUseCase.apply(command), Void.class));
@@ -143,9 +146,9 @@ public class AuthHandler {
     public Mono<ServerResponse> verifyOtp(ServerRequest request) {
         return request.bodyToMono(ValidateOtpRequest.class)
                 .flatMap(objectValidator::validate)
-                .map(otpApiMapper::toCommand)
+                .map(OtpApiMapper::toCommand)
                 .flatMap(verifyOtpUseCase)
-                .map(authApiMapper::toResponseDto)
+                .map(AuthApiMapper::toResponseDto)
                 .flatMap(responseDto -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(responseDto));

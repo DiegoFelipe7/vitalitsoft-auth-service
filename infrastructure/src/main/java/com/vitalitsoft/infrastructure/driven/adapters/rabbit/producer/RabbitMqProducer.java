@@ -3,8 +3,7 @@ package com.vitalitsoft.infrastructure.driven.adapters.rabbit.producer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.infrastructure.driven.adapters.rabbit.config.RabbitMqProperties;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -67,10 +66,7 @@ public class RabbitMqProducer<T> implements EventsRepository<T> {
         var binding = bindingsIndex.get(key);
 
         if (binding == null) {
-            throw new NexusException(
-                    NexusException.Type.INTERNAL_ERROR,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
+            throw new VitalitSoftException(VitalitSoftException.Type.INTERNAL_ERROR);
         }
 
         return binding;
@@ -83,7 +79,7 @@ public class RabbitMqProducer<T> implements EventsRepository<T> {
             return objectMapper.writeValueAsString(event);
         } catch (JsonProcessingException e) {
             log.error("Error converting event to JSON: {}", e.getMessage());
-            throw new NexusException("Error converting event to JSON" + e, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new VitalitSoftException("Error converting event to JSON");
         }
     }
 }

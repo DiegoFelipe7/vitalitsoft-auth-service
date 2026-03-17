@@ -9,9 +9,8 @@ import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.UserRegisterEventModel;
 import com.vitalitsoft.domain.hashing.HashingRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.constants.RabbitEvent;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +48,8 @@ public class RegisterUserUseCase implements Function<RegisterUserCommand, Mono<V
                 .flatMap(exists -> {
                     if (exists) {
                         log.warn("Intento de registro con email ya existente: {}", email);
-                        return Mono.error(new NexusException(
-                                NexusException.Type.EMAIL_ALREADY_EXISTS,
-                                HttpStatus.CONFLICT
+                        return Mono.error(new VitalitSoftException(
+                                VitalitSoftException.Type.EMAIL_ALREADY_EXISTS
                         ));
                     }
                     return Mono.empty();

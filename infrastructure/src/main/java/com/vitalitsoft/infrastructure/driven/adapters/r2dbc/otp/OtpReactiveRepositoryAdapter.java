@@ -2,8 +2,7 @@ package com.vitalitsoft.infrastructure.driven.adapters.r2dbc.otp;
 
 import com.vitalitsoft.domain.otp.OtpModel;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.otp.mapper.OtpMapper;
 import org.reactivecommons.utils.ObjectMapper;
@@ -44,7 +43,7 @@ public class OtpReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     public Mono<OtpModel> findBySessionId(String sessionId) {
         return repository
                 .findBySessionId(sessionId)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.SESSION_ID_NOT_FOUND, HttpStatus.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.SESSION_ID_NOT_FOUND)))
                 .map(OtpMapper::toModel);
     }
 
@@ -54,7 +53,7 @@ public class OtpReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 .matching(Query.query(Criteria.where("id").is(uuid)))
                 .apply(Update.update("used", true).set("updated_at", LocalDateTime.now()))
                 .filter(rows -> rows > 0)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.OTP_INVALID, HttpStatus.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.OTP_INVALID)))
                 .then(
                         template.selectOne(
                                 Query.query(Criteria.where("id").is(uuid)),
@@ -68,12 +67,7 @@ public class OtpReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     public Mono<OtpModel> update(OtpModel model) {
         OtpEntity entity = OtpMapper.toEntity(model);
         return template.update(entity)
-                .switchIfEmpty(Mono.error(
-                        new NexusException(
-                                NexusException.Type.OTP_INVALID,
-                                HttpStatus.NOT_FOUND
-                        )
-                ))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.OTP_INVALID)))
                 .map(OtpMapper::toModel);
     }
 

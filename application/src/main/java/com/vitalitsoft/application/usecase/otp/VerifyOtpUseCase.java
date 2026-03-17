@@ -9,8 +9,7 @@ import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.otp.OtpModel;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -47,23 +46,20 @@ public class VerifyOtpUseCase implements Function<VerifyOtpCommand, Mono<TokenMo
 
     private Mono<OtpModel> validateOtpState(OtpModel otp) {
         if (otp.hasExceededVerificationAttempts(MAX_ATTEMPTS)) {
-            return Mono.error(new NexusException(
-                    NexusException.Type.OTP_MAX_ATTEMPTS,
-                    HttpStatus.BAD_REQUEST
+            return Mono.error(new VitalitSoftException(
+                    VitalitSoftException.Type.OTP_MAX_ATTEMPTS
             ));
         }
 
         if (otp.isUsed()) {
-            return Mono.error(new NexusException(
-                    NexusException.Type.OTP_ALREADY_USED,
-                    HttpStatus.BAD_REQUEST
+            return Mono.error(new VitalitSoftException(
+                    VitalitSoftException.Type.OTP_ALREADY_USED
             ));
         }
 
         if (otp.isExpired()) {
-            return Mono.error(new NexusException(
-                    NexusException.Type.OTP_EXPIRED,
-                    HttpStatus.BAD_REQUEST
+            return Mono.error(new VitalitSoftException(
+                    VitalitSoftException.Type.OTP_EXPIRED
             ));
         }
 
@@ -83,9 +79,8 @@ public class VerifyOtpUseCase implements Function<VerifyOtpCommand, Mono<TokenMo
                     }
                     log.warn("OTP inválido para sessionId: {}", otp.getSessionId());
                     return incrementAttempts(otp)
-                            .then(Mono.error(new NexusException(
-                                    NexusException.Type.OTP_INVALID,
-                                    HttpStatus.BAD_REQUEST
+                            .then(Mono.error(new VitalitSoftException(
+                                    VitalitSoftException.Type.OTP_INVALID
                             )));
 
                 });
