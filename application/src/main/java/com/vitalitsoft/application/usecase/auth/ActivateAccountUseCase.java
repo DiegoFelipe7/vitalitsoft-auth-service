@@ -1,6 +1,6 @@
 package com.vitalitsoft.application.usecase.auth;
 
-import com.vitalitsoft.application.dto.auth.request.ActivateAccountRequest;
+import com.vitalitsoft.application.command.auth.ActivateAccountCommand;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.shared.enums.Status;
 import com.vitalitsoft.domain.shared.enums.TokenType;
@@ -17,20 +17,20 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ActivateAccountUseCase implements Function<ActivateAccountRequest, Mono<Void>> {
+public class ActivateAccountUseCase implements Function<ActivateAccountCommand, Mono<Void>> {
     private final AuthRepository authRepository;
     private final UserTokenRepository userTokenRepository;
 
     @Override
-    public Mono<Void> apply(ActivateAccountRequest request) {
+    public Mono<Void> apply(ActivateAccountCommand command) {
         log.info("Iniciando proceso de activación de cuenta con token tipo: {}", TokenType.ACTIVATE_ACCOUNT);
 
-        return userTokenRepository.findByTokenAndType(request.getToken(), TokenType.ACTIVATE_ACCOUNT)
+        return userTokenRepository.findByTokenAndType(command.getToken(), TokenType.ACTIVATE_ACCOUNT)
                 .doOnNext(UserTokenModel::verifyValidity)
                 .flatMap(this::activateUserAccount)
                 .flatMap(ele -> markTokenAsUsed(ele.getId()))
-                .doOnSuccess(unused -> log.info("Cuenta activada exitosamente - Token: {}", request.getToken()))
-                .doOnError(error -> log.error("Error en activación de cuenta - Token: {}, Error: {}", request.getToken(), error.getMessage()));
+                .doOnSuccess(unused -> log.info("Cuenta activada exitosamente - Token: {}", command.getToken()))
+                .doOnError(error -> log.error("Error en activación de cuenta - Token: {}, Error: {}", command.getToken(), error.getMessage()));
 
     }
 

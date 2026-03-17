@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.auth.request;
+package com.vitalitsoft.infrastructure.entry.points.api.auth.dto.auth.request;
 
 
 import jakarta.validation.constraints.*;

@@ -3,8 +3,7 @@ package com.vitalitsoft.infrastructure.driven.adapters.r2dbc.refreshToken;
 
 import com.vitalitsoft.domain.refreshtoken.RefreshTokenModel;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.helper.ReactiveAdapterOperations;
 import com.vitalitsoft.infrastructure.driven.adapters.r2dbc.refreshToken.mapper.RefreshTokenMapper;
 import org.springframework.stereotype.Repository;
@@ -32,7 +31,7 @@ public class RefreshTokenReactiveRepositoryAdapter extends ReactiveAdapterOperat
     @Override
     public Mono<RefreshTokenModel> findByToken(String token) {
         return repository.findByToken(token)
-                .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.TOKEN_NOT_FOUND, HttpStatus.UNAUTHORIZED)))
+                .switchIfEmpty(Mono.error(new VitalitSoftException(VitalitSoftException.Type.TOKEN_NOT_FOUND)))
                 .map(RefreshTokenMapper::mapToModel);
     }
 

@@ -38,11 +38,6 @@ public class AuthEntity implements UserDetails {
     }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
     @NonNull
     public String getUsername() {
         return this.getId().toString();

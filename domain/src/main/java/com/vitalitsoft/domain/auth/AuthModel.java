@@ -1,9 +1,8 @@
 package com.vitalitsoft.domain.auth;
 
-import com.vitalitsoft.domain.shared.constants.HttpStatus;
 import com.vitalitsoft.domain.shared.enums.Role;
 import com.vitalitsoft.domain.shared.enums.Status;
-import com.vitalitsoft.domain.shared.exception.NexusException;
+import com.vitalitsoft.domain.shared.exception.VitalitSoftException;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -39,16 +38,10 @@ public class AuthModel {
     public void ensureCanLogin() {
          switch (this.status) {
             case INACTIVE ->
-                throw new NexusException(
-                        NexusException.Type.ACCOUNT_LOCKED,
-                        HttpStatus.FORBIDDEN
-                );
+                throw new VitalitSoftException(VitalitSoftException.Type.ACCOUNT_LOCKED);
 
             case PENDING_VERIFICATION ->
-                throw new NexusException(
-                        NexusException.Type.PENDING_VERIFICATION,
-                        HttpStatus.FORBIDDEN
-                );
+                throw new VitalitSoftException(VitalitSoftException.Type.PENDING_VERIFICATION);
 
         }
     }

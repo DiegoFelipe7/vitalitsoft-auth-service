@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.passwordReset.response;
+package com.vitalitsoft.infrastructure.entry.points.api.auth.dto.passwordReset.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

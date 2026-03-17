@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.otp.request;
+package com.vitalitsoft.infrastructure.entry.points.api.auth.dto.otp.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

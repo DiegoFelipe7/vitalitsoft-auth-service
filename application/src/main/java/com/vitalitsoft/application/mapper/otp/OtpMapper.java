@@ -13,7 +13,7 @@ public class OtpMapper {
         throw new IllegalStateException("Utility class");
     }
 
-    public static OtpModel toModel(UUID uuid, String code) {
+    public static OtpModel toOtpModel(UUID uuid, String code) {
         return OtpModel.builder()
                 .userId(uuid)
                 .code(code)
