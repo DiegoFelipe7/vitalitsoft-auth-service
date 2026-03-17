@@ -1,8 +1,6 @@
 package com.vitalitsoft.application.usecase.otp;
 
-import com.vitalitsoft.application.dto.auth.response.LoginResponse;
-import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
-import com.vitalitsoft.application.mapper.auth.AuthMapper;
+import com.vitalitsoft.application.command.otp.VerifyOtpCommand;
 import com.vitalitsoft.domain.auth.AuthModel;
 import com.vitalitsoft.domain.auth.TokenModel;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
@@ -24,7 +22,7 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class VerifyOtpUseCase implements Function<ValidateOtpRequest, Mono<LoginResponse>> {
+public class VerifyOtpUseCase implements Function<VerifyOtpCommand, Mono<TokenModel>> {
     private static final int MAX_ATTEMPTS = 3;
     private final OtpRepository otpRepository;
     private final AuthRepository authRepository;
@@ -34,16 +32,15 @@ public class VerifyOtpUseCase implements Function<ValidateOtpRequest, Mono<Login
 
 
     @Override
-    public Mono<LoginResponse> apply(ValidateOtpRequest request) {
-        log.info("Iniciando verificación de OTP para sessionId: {}", request.getSessionId());
+    public Mono<TokenModel> apply(VerifyOtpCommand command) {
+        log.info("Iniciando verificación de OTP para sessionId: {}", command.getSessionId());
 
-        return otpRepository.findBySessionId(request.getSessionId())
+        return otpRepository.findBySessionId(command.getSessionId())
                 .flatMap(this::validateOtpState)
                 .delayElement(Duration.ofSeconds(3))
-                .flatMap(data -> verifyOtpCode(data, request.getOtp()))
+                .flatMap(data -> verifyOtpCode(data, command.getOtp()))
                 .flatMap(otp -> otpRepository.markAsUsed(otp.getId()))
-                .flatMap(otpModel -> generateTokens(otpModel.getUserId(), request.isInactiveTwoFactor()))
-                .map(AuthMapper::toLoginResponse)
+                .flatMap(otpModel -> generateTokens(otpModel.getUserId(), command.isInactiveTwoFactor()))
                 .doOnSuccess(response -> log.info("OTP verificado exitosamente"))
                 .doOnError(error -> log.error("Error al verificar OTP: {}", error.getMessage()));
     }

@@ -1,8 +1,7 @@
 package com.vitalitsoft.application.usecase.auth;
 
 
-import com.vitalitsoft.application.dto.auth.request.LoginRequest;
-import com.vitalitsoft.application.dto.auth.response.LoginResponse;
+import com.vitalitsoft.application.command.auth.LoginCommand;
 import com.vitalitsoft.application.mapper.auth.AuthMapper;
 import com.vitalitsoft.application.mapper.otp.OtpMapper;
 import com.vitalitsoft.domain.auth.AuthModel;
@@ -27,7 +26,7 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>> {
+public class LoginUseCase implements Function<LoginCommand, Mono<TokenModel>> {
 
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
@@ -37,16 +36,15 @@ public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>>
     private final EventsRepository<SendOtpEventModel> eventPublisher;
 
     @Override
-    public Mono<LoginResponse> apply(LoginRequest request) {
-        log.info("Iniciando proceso de login para usuario: {}", request.getEmail());
+    public Mono<TokenModel> apply(LoginCommand command) {
+        log.info("Iniciando proceso de login para usuario: {}", command.getEmail());
 
-        return authRepository.findByEmail(request.getEmail())
+        return authRepository.findByEmail(command.getEmail())
                 .doOnNext(AuthModel::ensureCanLogin)
-                .flatMap(user -> validatePassword(user, request.getPassword()))
+                .flatMap(user -> validatePassword(user, command.getPassword()))
                 .flatMap(this::processLoginFlow)
-                .map(AuthMapper::toLoginResponse)
-                .doOnSuccess(token -> log.info("Login successful for user: {}", request.getEmail()))
-                .doOnError(error -> log.warn("Login failed for user {}: {}", request.getEmail(), error.getMessage()));
+                .doOnSuccess(token -> log.info("Login successful for user: {}", command.getEmail()))
+                .doOnError(error -> log.warn("Login failed for user {}: {}", command.getEmail(), error.getMessage()));
     }
 
 

@@ -1,6 +1,6 @@
 package com.vitalitsoft.application.usecase.otp;
 
-import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
+import com.vitalitsoft.application.command.otp.ResendOtpCommand;
 import com.vitalitsoft.application.mapper.otp.OtpMapper;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
@@ -21,7 +21,7 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ResendOtpUseCase implements Function<ResendOtpRequest, Mono<Void>> {
+public class ResendOtpUseCase implements Function<ResendOtpCommand, Mono<Void>> {
 
     private static final int MAX_RESEND = 3;
     private final AuthRepository authRepository;
@@ -30,14 +30,14 @@ public class ResendOtpUseCase implements Function<ResendOtpRequest, Mono<Void>> 
     private final HashingRepository encryptionRepository;
 
     @Override
-    public Mono<Void> apply(ResendOtpRequest request) {
-        log.info("Iniciando proceso de reenvío de OTP para sessionId: {}", request.getSessionId());
-        
-        return otpRepository.findBySessionId(request.getSessionId())
+    public Mono<Void> apply(ResendOtpCommand command) {
+        log.info("Iniciando proceso de reenvío de OTP para sessionId: {}", command.getSessionId());
+
+        return otpRepository.findBySessionId(command.getSessionId())
                 .flatMap(this::validateResendRules)
                 .flatMap(this::processOtpRegeneration)
-                .doOnSuccess(response -> log.info("OTP reenviado exitosamente para sessionId: {}", request.getSessionId()))
-                .doOnError(error -> log.error("Error al reenviar OTP para sessionId {}: {}", request.getSessionId(), error.getMessage()));
+                .doOnSuccess(response -> log.info("OTP reenviado exitosamente para sessionId: {}", command.getSessionId()))
+                .doOnError(error -> log.error("Error al reenviar OTP para sessionId {}: {}", command.getSessionId(), error.getMessage()));
     }
 
     private Mono<OtpModel> validateResendRules(OtpModel otp) {

@@ -1,6 +1,6 @@
 package com.vitalitsoft.application.usecase.passwordReset;
 
-import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
+import com.vitalitsoft.application.command.passwordReset.ConfirmPasswordResetCommand;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.shared.enums.TokenType;
@@ -15,19 +15,19 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ConfirmPasswordResetUseCase implements Function<ConfirmPasswordResetRequest, Mono<Void>> {
+public class ConfirmPasswordResetUseCase implements Function<ConfirmPasswordResetCommand, Mono<Void>> {
     private final UserTokenRepository userTokenRepository;
     private final AuthRepository authRepository;
     private final HashingRepository hashingRepository;
 
     @Override
-    public Mono<Void> apply(ConfirmPasswordResetRequest request) {
-        log.info("Iniciando confirmación de restablecimiento de contraseña para token tipo: {}", request.getTokenType());
+    public Mono<Void> apply(ConfirmPasswordResetCommand command) {
+        log.info("Iniciando confirmación de restablecimiento de contraseña para token tipo: {}", command.getTokenType());
 
-        return userTokenRepository.findByTokenAndType(request.getToken(), request.getTokenType())
-                .flatMap(userTokenModel -> updateUserPassword(userTokenModel, request.getPassword()))
+        return userTokenRepository.findByTokenAndType(command.getToken(), command.getTokenType())
+                .flatMap(userTokenModel -> updateUserPassword(userTokenModel, command.getPassword()))
                 .flatMap(this::markTokenAsUsed)
-                .doOnSuccess(email -> log.info("Token marcado como usado y contraseña actualizada para: {}", email))
+                .doOnSuccess(email -> log.info("Token marcado como usado y contraseña actualizada"))
                 .doOnError(error -> log.error("Error al confirmar restablecimiento de contraseña", error));
 
     }

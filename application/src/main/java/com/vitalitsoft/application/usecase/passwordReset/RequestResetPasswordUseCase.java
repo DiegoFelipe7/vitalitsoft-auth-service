@@ -1,6 +1,6 @@
 package com.vitalitsoft.application.usecase.passwordReset;
 
-import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
+import com.vitalitsoft.application.command.passwordReset.RequestResetPasswordCommand;
 import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
@@ -16,25 +16,25 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class RequestResetPasswordUseCase implements Function<RequestResetPassword, Mono<Void>> {
+public class RequestResetPasswordUseCase implements Function<RequestResetPasswordCommand, Mono<Void>> {
 
     private final AuthRepository authRepository;
     private final UserTokenRepository userTokenRepository;
     private final EventsRepository<PasswordResetEventModel> eventPublisher;
 
     @Override
-    public Mono<Void> apply(RequestResetPassword request) {
-        log.info("Iniciando solicitud de restablecimiento de contraseña para: {}", request.getEmail());
+    public Mono<Void> apply(RequestResetPasswordCommand command) {
+        log.info("Iniciando solicitud de restablecimiento de contraseña para: {}", command.getEmail());
 
-        return authRepository.findByEmail(request.getEmail())
+        return authRepository.findByEmail(command.getEmail())
                 .map(user -> {
-                    UserTokenModel userTokenModel = UserTokenMapper.toPasswordModel(request.getEmail());
+                    UserTokenModel userTokenModel = UserTokenMapper.toPasswordModel(command.getEmail());
                     return userTokenModel.withUserId(user.getId());
                 })
                 .flatMap(userTokenRepository::save)
-                .flatMap(saved -> publishEvent(request.getEmail(), saved.getToken()))
-                .doOnSuccess(response -> log.info("Proceso de solicitud de restablecimiento completado para: {}", request.getEmail()))
-                .doOnError(error -> log.error("Error al solicitar restablecimiento para {}: {}", request.getEmail(), error.getMessage()));
+                .flatMap(saved -> publishEvent(command.getEmail(), saved.getToken()))
+                .doOnSuccess(response -> log.info("Proceso de solicitud de restablecimiento completado para: {}", command.getEmail()))
+                .doOnError(error -> log.error("Error al solicitar restablecimiento para {}: {}", command.getEmail(), error.getMessage()));
     }
 
     private Mono<Void> publishEvent(String email, String token) {

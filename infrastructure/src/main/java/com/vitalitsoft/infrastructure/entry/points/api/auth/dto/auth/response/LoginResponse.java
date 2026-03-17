@@ -1,4 +1,4 @@
-package com.vitalitsoft.application.dto.auth.response;
+package com.vitalitsoft.infrastructure.entry.points.api.auth.dto.auth.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,7 +1,6 @@
 package com.vitalitsoft.application.usecase.passwordReset;
 
-import com.vitalitsoft.application.dto.passwordReset.request.ValidateTokenResetRequest;
-import com.vitalitsoft.application.dto.passwordReset.response.ValidatePasswordResetTokenResponse;
+import com.vitalitsoft.application.command.passwordReset.ValidateTokenResetCommand;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,18 +11,17 @@ import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ValidatePasswordResetTokenUseCase implements Function<ValidateTokenResetRequest, Mono<ValidatePasswordResetTokenResponse>> {
+public class ValidatePasswordResetTokenUseCase implements Function<ValidateTokenResetCommand, Mono<Boolean>> {
     private final UserTokenRepository userTokenRepository;
 
     @Override
-    public Mono<ValidatePasswordResetTokenResponse> apply(ValidateTokenResetRequest request) {
-        log.info("Validando token de tipo: {}", request.getTokenType());
+    public Mono<Boolean> apply(ValidateTokenResetCommand command) {
+        log.info("Validando token de tipo: {}", command.getTokenType());
 
-        return this.userTokenRepository.findByTokenAndType(request.getToken(), request.getTokenType())
+        return this.userTokenRepository.findByTokenAndType(command.getToken(), command.getTokenType())
                 .doOnNext(UserTokenModel::verifyValidity)
-                .map(ele->!ele.getUsed())
-                .map(ele -> ValidatePasswordResetTokenResponse.builder().isValid(ele).build())
-                .doOnSuccess(response -> log.info("Validación de token de tipo: {} resultó en: {}", request.getTokenType(), response.getIsValid()))
-                .doOnError(error -> log.error("Error al validar token de tipo: {}", request.getTokenType(), error));
+                .map(ele -> !ele.getUsed())
+                .doOnSuccess(isValid -> log.info("Validación de token de tipo: {} resultó en: {}", command.getTokenType(), isValid))
+                .doOnError(error -> log.error("Error al validar token de tipo: {}", command.getTokenType(), error));
     }
 }

@@ -1,14 +1,14 @@
 package com.vitalitsoft.infrastructure.entry.points.api.auth;
 
-import com.vitalitsoft.application.dto.auth.request.ActivateAccountRequest;
-import com.vitalitsoft.application.dto.auth.request.LoginRequest;
-import com.vitalitsoft.application.dto.auth.request.RegisterUserRequest;
-import com.vitalitsoft.application.dto.auth.response.LoginResponse;
-import com.vitalitsoft.application.dto.passwordReset.request.ConfirmPasswordResetRequest;
-import com.vitalitsoft.application.dto.passwordReset.request.RequestResetPassword;
-import com.vitalitsoft.application.dto.passwordReset.request.ValidateTokenResetRequest;
-import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
-import com.vitalitsoft.application.dto.otp.request.ValidateOtpRequest;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.auth.request.ActivateAccountRequest;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.auth.request.LoginRequest;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.auth.request.RegisterUserRequest;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.auth.response.LoginResponse;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.passwordReset.request.ConfirmPasswordResetRequest;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.passwordReset.request.RequestResetPassword;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.passwordReset.request.ValidateTokenResetRequest;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.otp.request.ResendOtpRequest;
+import com.vitalitsoft.infrastructure.entry.points.api.auth.dto.otp.request.ValidateOtpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -216,7 +216,7 @@ public class AuthRouterRest {
                             ),
                             responses = {
                                     @ApiResponse(responseCode = "200", description = "OTP válido",
-                                            content = @Content(schema = @Schema(implementation = com.vitalitsoft.application.dto.auth.response.LoginResponse.class))),
+                                            content = @Content(schema = @Schema(implementation = LoginResponse.class))),
                                     @ApiResponse(responseCode = "400", description = "OTP inválido o expirado", content = @Content(schema = @Schema(type = "string", example = "OTP incorrecto o expirado"))),
                                     @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content(schema = @Schema(type = "string", example = "Usuario no autenticado"))),
                                     @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(schema = @Schema(type = "string", example = "Error al validar OTP")))
