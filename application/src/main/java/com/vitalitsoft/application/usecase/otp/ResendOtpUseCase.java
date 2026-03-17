@@ -1,6 +1,7 @@
 package com.vitalitsoft.application.usecase.otp;
 
 import com.vitalitsoft.application.dto.otp.request.ResendOtpRequest;
+import com.vitalitsoft.application.mapper.otp.OtpMapper;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.SendOtpEventModel;
@@ -8,6 +9,7 @@ import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.otp.OtpModel;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.constants.RabbitEvent;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.domain.shared.utils.OtpGenerator;
 import lombok.RequiredArgsConstructor;
@@ -78,11 +80,7 @@ public class ResendOtpUseCase implements Function<ResendOtpRequest, Mono<Void>> 
                             .otp(rawOtp)
                             .build();
 
-                    return eventPublisher.publish(
-                            "auth.exchange",
-                            "auth.otp.send",
-                            event
-                    );
+                    return eventPublisher.publish(RabbitEvent.GENERATE_OTP, event);
                 })
                 .doOnSuccess(unused -> log.info("Evento OTP publicado para userId={}", otp.getUserId()))
                 .doOnError(error -> log.warn("Error publicando evento OTP para userId={}, error={}", otp.getUserId(), error.getMessage()));

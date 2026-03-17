@@ -1,6 +1,6 @@
 // build.gradle para el módulo bootstrap
 plugins {
-    id 'org.springframework.boot' version '4.0.2'
+    id 'org.springframework.boot' version '3.5.4'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
 }
@@ -18,4 +18,8 @@ repositories {
 
 springBoot {
     mainClass = 'com.vitalitsoft.MainApplication'
+}
+
+jar {
+    enabled = false
 }

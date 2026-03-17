@@ -15,6 +15,7 @@ import com.vitalitsoft.domain.hashing.HashingRepository;
 import com.vitalitsoft.domain.otp.gateways.OtpRepository;
 import com.vitalitsoft.domain.refreshtoken.gateways.RefreshTokenRepository;
 import com.vitalitsoft.domain.shared.constants.HttpStatus;
+import com.vitalitsoft.domain.shared.constants.RabbitEvent;
 import com.vitalitsoft.domain.shared.exception.NexusException;
 import com.vitalitsoft.domain.shared.utils.OtpGenerator;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>>
 
     private Mono<AuthModel> validatePassword(AuthModel user, String rawPassword) {
 
-        return  hashingRepository.matches(rawPassword, user.getPassword())
+        return hashingRepository.matches(rawPassword, user.getPassword())
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(new NexusException(NexusException.Type.INVALID_PASSWORD, HttpStatus.UNAUTHORIZED)))
                 .thenReturn(user);
@@ -78,11 +79,15 @@ public class LoginUseCase implements Function<LoginRequest, Mono<LoginResponse>>
 
     private Mono<Void> publishOtpEvent(String email, String sessionId, String rawOtp) {
 
-        return eventPublisher.publish(
-                "auth.exchange",
-                "auth.otp.send",
-                OtpMapper.toSendOtpEventModel(email, sessionId, rawOtp)
-        );
+        SendOtpEventModel event = SendOtpEventModel.builder()
+                .sessionId(sessionId)
+                .email(email)
+                .otp(rawOtp)
+                .build();
+
+        return eventPublisher.publish(RabbitEvent.GENERATE_OTP, event)
+                .doOnSuccess(unused -> log.info("OTP publicado para el email {}", email))
+                .doOnError(error -> log.error("Error publicando OTP para email {}: {}", email, error.getMessage()));
     }
 
 

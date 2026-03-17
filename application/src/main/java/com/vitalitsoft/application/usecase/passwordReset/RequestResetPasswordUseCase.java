@@ -5,8 +5,7 @@ import com.vitalitsoft.application.mapper.userToken.UserTokenMapper;
 import com.vitalitsoft.domain.auth.gateways.AuthRepository;
 import com.vitalitsoft.domain.events.gateways.EventsRepository;
 import com.vitalitsoft.domain.events.model.PasswordResetEventModel;
-import com.vitalitsoft.domain.shared.enums.UserEventType;
-import com.vitalitsoft.domain.shared.events.RabbitEventCatalog;
+import com.vitalitsoft.domain.shared.constants.RabbitEvent;
 import com.vitalitsoft.domain.userToken.UserTokenModel;
 import com.vitalitsoft.domain.userToken.gateways.UserTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,7 @@ public class RequestResetPasswordUseCase implements Function<RequestResetPasswor
 
     private final AuthRepository authRepository;
     private final UserTokenRepository userTokenRepository;
-    private final EventsRepository<PasswordResetEventModel> eventsRepository;
+    private final EventsRepository<PasswordResetEventModel> eventPublisher;
 
     @Override
     public Mono<Void> apply(RequestResetPassword request) {
@@ -39,14 +38,16 @@ public class RequestResetPasswordUseCase implements Function<RequestResetPasswor
     }
 
     private Mono<Void> publishEvent(String email, String token) {
+
+        PasswordResetEventModel event = PasswordResetEventModel.builder()
+                .email(email)
+                .token(token)
+                .build();
+
         log.debug("Publicando evento de restablecimiento de contraseña para: {}", email);
-        var routing = RabbitEventCatalog.resolve(UserEventType.USER_PASSWORD_RESET);
-        return eventsRepository.publish(routing.exchange(), routing.routingKey(), PasswordResetEventModel.builder()
-                        .email(email)
-                        .token(token)
-                        .build())
-                .doOnSuccess(unused -> log.info("Evento '{}' publicado exitosamente para: {}", routing.exchange(), email))
-                .doOnError(error -> log.error("Error al publicar evento '{}' para: {}", routing.exchange(), email, error));
+        return eventPublisher.publish(RabbitEvent.USER_PASSWORD_RESET, event)
+                .doOnSuccess(unused -> log.info("Evento publicado exitosamente para: {}", email))
+                .doOnError(error -> log.error("Error al publicar evento para: {}", email, error));
 
     }
 }

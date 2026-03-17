@@ -21,6 +21,7 @@ public class NexusException extends CustomException {
         OTP_ALREADY_USED,
         OTP_EXPIRED,
         OTP_INVALID,
+
         OTP_BLOCKED,
         OTP_MAX_ATTEMPTS,
         PASSWORD_MISMATCH,

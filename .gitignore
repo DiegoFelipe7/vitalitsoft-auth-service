@@ -37,6 +37,6 @@ out/
 .vscode/
 
 .env
-.env.prod
+.env.dev
 .DS_Store
-docker-compose.yaml
+docker-compose.yml

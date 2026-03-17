@@ -1,7 +1,7 @@
 # Build artifacts
 **/build/
-**/target/
 *.jar
+!bootstrap/build/libs/bootstrap.jar
 *.war
 *.ear
 
@@ -30,7 +30,7 @@ Thumbs.db
 
 # Docker files
 Dockerfile*
-docker-compose*
+docker-compose.yml
 
 # Gradle cache
 .gradle/

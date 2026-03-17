@@ -38,3 +38,18 @@ adapters:
       header: ${JWT_HEADER}
       prefix: ${JWT_PREFIX}
       refresh_expiration: ${JWT_EXPIRATION_REFRESH_TOKEN}
+  rabbitmq:
+    host: ${RABBIT_HOST}
+    port: ${RABBIT_PORT}
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+    virtual-host: ${RABBIT_VIRTUAL_HOST}
+    connection-timeout: ${RABBIT_CONNECTION_TIMEOUT}
+    exchanges: ${RABBIT_EXCHANGES}
+    routing-keys: ${RABBIT_ROUTING_KEYS}
+    queues: ${RABBIT_QUEUES}
+    bindings: [ ]
+
+
+
+

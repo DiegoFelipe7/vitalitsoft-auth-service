@@ -1,17 +1,29 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_auth
+    env_file:
+      - .env
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - vitalitsoft-network
   db:
     image: postgres:15
-    container_name: postgres_db
+    container_name: postgres_db_auth
     environment:
       POSTGRES_DB: ${R2DBC_DATABASE}
       POSTGRES_USER: ${R2DBC_USERNAME}
       POSTGRES_PASSWORD: ${R2DBC_PASSWORD}
     ports:
-      - "${R2DBC_PORT}:5432"
+      - "5433:5432"
     env_file:
       - .env
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - vitalitsoft-network
   auth-service:
     build:
       context: .
@@ -19,12 +31,15 @@ services:
     container_name: vitalitsoft-auth-service
     depends_on:
       - db
+      - rabbitmq
     ports:
-      - "${SERVER_PORT}:8080"
+      - ${SERVER_PORT}
     env_file:
       - .env
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-    restart: unless-stopped
+    networks:
+      - vitalitsoft-network
 volumes:
   db_data:
+networks:
+  vitalitsoft-network:
+    driver: bridge
